@@ -1,0 +1,1292 @@
+<title>Parth's Recommender Kit</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="An optional questionnaire for teachers writing Parth Chapper's US university recommendation letters. Their answers build a master AI prompt that drafts the letter.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Spectral:ital,wght@0,500;0,600;0,700;1,500&display=swap">
+<style>
+/* Layout: airmail briefing desk. A striped airmail band opens the page; step 1 picks the writer; steps 2–4 are a form on the left; the master prompt is a sticky "letter" on the right (stacked below on phones, with a copy bar). Reference material follows. */
+:root {
+  --paper: #F5F7FB;
+  --sheet: #FFFFFF;
+  --field: #FBFCFE;
+  --ink: #15203B;
+  --ink-soft: #4B5676;
+  --rule: #D9DFEC;
+  --accent: #2444A8;
+  --accent-ink: #FFFFFF;
+  --accent-tint: #E8EDFA;
+  --mail-red: #C7323D;
+  --on-red: #FFFFFF;
+  --say: #1E7A4C;
+  --code-bg: #EFF2F8;
+  --shadow: 0 1px 2px rgba(21, 32, 59, .06), 0 10px 28px rgba(21, 32, 59, .08);
+  --display: "Spectral", Georgia, "Times New Roman", serif;
+  --body: "Public Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0D1324;
+    --sheet: #141B2F;
+    --field: #10172B;
+    --ink: #E7EBF5;
+    --ink-soft: #A2ACC6;
+    --rule: #273150;
+    --accent: #8EA7FF;
+    --accent-ink: #0D1324;
+    --accent-tint: #1B2547;
+    --mail-red: #F0727B;
+    --on-red: #1B0A0D;
+    --say: #63C996;
+    --code-bg: #0F1629;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 10px 28px rgba(0, 0, 0, .35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0D1324;
+  --sheet: #141B2F;
+  --field: #10172B;
+  --ink: #E7EBF5;
+  --ink-soft: #A2ACC6;
+  --rule: #273150;
+  --accent: #8EA7FF;
+  --accent-ink: #0D1324;
+  --accent-tint: #1B2547;
+  --mail-red: #F0727B;
+  --on-red: #1B0A0D;
+  --say: #63C996;
+  --code-bg: #0F1629;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 10px 28px rgba(0, 0, 0, .35);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 16px/1.6 var(--body);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, pre:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.airmail {
+  height: 8px;
+  background: repeating-linear-gradient(135deg, var(--mail-red) 0 14px, var(--paper) 14px 22px, var(--accent) 22px 36px, var(--paper) 36px 44px);
+}
+.airmail.thin { height: 6px; background: repeating-linear-gradient(135deg, var(--mail-red) 0 12px, var(--sheet) 12px 19px, var(--accent) 19px 31px, var(--sheet) 31px 38px); }
+
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 40px 72px;
+  display: grid;
+  gap: 56px;
+}
+.page > * { min-width: 0; }
+
+.eyebrow, .group-label, th, .kv dt, .goes-label, .mission-label, .date, .bar-title, .uchip .tag {
+  font-family: var(--mono);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.eyebrow { font-size: .74rem; color: var(--ink-soft); margin: 0 0 10px; }
+h1 {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(2.3rem, 5.5vw, 3.6rem);
+  line-height: 1.04;
+  letter-spacing: -.01em;
+  margin: 0 0 16px;
+  text-wrap: balance;
+}
+h2 {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  line-height: 1.15;
+  margin: 0 0 6px;
+  text-wrap: balance;
+}
+.optional-note { margin: 0 0 14px; padding: 10px 14px; background: var(--accent-tint); border-radius: 10px; max-width: 64ch; }
+.optional-note strong { font-weight: 700; }
+.lede { font-size: 1.125rem; max-width: 64ch; margin: 0 0 8px; }
+.who { color: var(--ink-soft); margin: 0 0 24px; font-size: .95rem; max-width: 70ch; }
+.section-sub { color: var(--ink-soft); max-width: 72ch; margin: 0 0 18px; }
+
+.dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 32px;
+  padding-block: 16px;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+.date-cell { flex: 1 1 200px; min-width: 0; display: grid; gap: 2px; }
+.date { font-size: .8rem; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--ink); text-transform: none; letter-spacing: .02em; }
+.date-cell.urgent .date { color: var(--mail-red); }
+.date-cell .what { font-size: .92rem; color: var(--ink-soft); }
+
+/* Step 1: chooser */
+.choose-groups { display: grid; gap: 18px; }
+.group-label { font-size: .7rem; color: var(--ink-soft); margin: 0 0 8px; }
+.choose-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.pick, .uchip {
+  font: inherit;
+  text-align: left;
+  color: var(--ink);
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  cursor: pointer;
+  display: grid;
+  transition: border-color .15s ease, background-color .15s ease, color .15s ease;
+}
+.pick { padding: 12px 14px; gap: 2px; }
+.pick:hover, .uchip:hover { border-color: var(--accent); }
+.pick[aria-pressed="true"], .uchip[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.pick-name { font-family: var(--display); font-weight: 600; font-size: 1.08rem; line-height: 1.25; }
+.pick-role { font-size: .86rem; color: var(--ink-soft); }
+.pick[aria-pressed="true"] .pick-role, .uchip[aria-pressed="true"] .tag { color: inherit; opacity: .8; }
+
+/* Tool: steps + master prompt */
+.tool { display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; align-items: start; }
+.steps { display: grid; gap: 48px; min-width: 0; }
+.step { display: grid; gap: 18px; min-width: 0; }
+.step-head .section-sub { margin-bottom: 0; }
+.role-note { display: grid; gap: 10px; }
+.job { font-size: 1.08rem; max-width: 68ch; margin: 0; }
+.note { color: var(--ink-soft); margin: 0; font-size: .95rem; max-width: 68ch; }
+.goes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: baseline;
+  padding: 12px 14px;
+  background: var(--accent-tint);
+  border-radius: 10px;
+  max-width: 80ch;
+}
+.goes-label { font-size: .68rem; color: var(--accent); flex: none; }
+.goes-text { min-width: 0; flex: 1 1 260px; font-size: .95rem; }
+
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px 18px; }
+.field { display: grid; gap: 5px; min-width: 0; align-content: start; }
+.field label { font-size: .84rem; font-weight: 600; color: var(--ink-soft); }
+.field input, .field select, .field textarea, .qitem textarea {
+  font: inherit;
+  color: var(--ink);
+  background: var(--field);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 10px 12px;
+  width: 100%;
+}
+.qitem textarea, .field textarea { resize: vertical; line-height: 1.5; min-height: 4.6em; }
+.field select { appearance: auto; }
+
+.qlist { counter-reset: q; list-style: none; margin: 0; padding: 0; display: grid; }
+.qitem { counter-increment: q; display: grid; gap: 8px; padding-block: 18px; border-top: 1px solid var(--rule); min-width: 0; }
+.qitem:first-child { border-top: 0; padding-top: 4px; }
+.qhead { display: grid; grid-template-columns: 1.8rem minmax(0, 1fr); gap: 4px; align-items: baseline; }
+.qhead::before { content: counter(q) "."; font-family: var(--mono); font-size: .88rem; color: var(--accent); }
+.qlabel { font-family: var(--display); font-size: 1.14rem; font-weight: 600; line-height: 1.35; margin: 0; padding: 0; }
+.qbody { display: grid; gap: 8px; padding-left: 1.8rem; min-width: 0; }
+.qhint { margin: 0; color: var(--ink-soft); font-size: .9rem; }
+.qstate { font-family: var(--mono); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; color: var(--say); margin-left: 8px; white-space: nowrap; font-weight: 500; }
+.qitem:not(.is-answered) .qstate { display: none; }
+.optional-tag { font-family: var(--mono); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); margin-left: 8px; font-weight: 500; }
+.sel-list, .howlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.small-note { font-size: .88rem; color: var(--ink-soft); margin: 0; }
+
+.textbtn { font: inherit; font-size: .9rem; font-weight: 600; color: var(--accent); background: none; border: 0; padding: 4px 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.textbtn.danger[data-armed="true"] { color: var(--mail-red); }
+.answers-foot { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; justify-content: space-between; }
+
+.uni-actions { display: flex; gap: 18px; flex-wrap: wrap; }
+.chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(156px, 1fr)); gap: 8px; }
+.uchip { padding: 9px 12px; gap: 1px; }
+.uchip .uname { font-weight: 600; font-size: .95rem; line-height: 1.3; }
+.uchip .tag { font-size: .66rem; color: var(--ink-soft); }
+.other-fields { display: grid; gap: 12px; }
+.sel-list li { display: grid; grid-template-columns: minmax(7.5rem, 9rem) minmax(0, 1fr); gap: 2px 12px; font-size: .92rem; padding-top: 8px; border-top: 1px solid var(--rule); }
+.sel-list li:first-child { border-top: 0; padding-top: 0; }
+.sel-list strong { font-weight: 600; }
+
+.howlist { counter-reset: h; gap: 12px; max-width: 64ch; }
+.howlist li { counter-increment: h; display: grid; grid-template-columns: 1.8rem minmax(0, 1fr); }
+.howlist li::before { content: counter(h) "."; font-family: var(--mono); color: var(--accent); }
+
+/* Master prompt panel: the letter itself */
+.panel {
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  scroll-margin-top: 16px;
+}
+.panel-head { padding: 18px 20px 14px; display: grid; gap: 10px; }
+.panel-head h2 { margin: 0; font-size: clamp(1.4rem, 2.4vw, 1.75rem); }
+.panel-for { margin: 0; color: var(--ink-soft); font-size: .93rem; }
+.meter { height: 6px; border-radius: 999px; background: var(--code-bg); overflow: hidden; }
+.meter span { display: block; height: 100%; width: 0; background: var(--say); transition: width .25s ease; }
+.panel-status { margin: 0; font-size: .9rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn {
+  font: inherit;
+  font-weight: 600;
+  font-size: .95rem;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+}
+.btn.primary { background: var(--accent); color: var(--accent-ink); }
+.btn:hover { filter: brightness(1.06); }
+.btn:disabled { opacity: .45; cursor: not-allowed; filter: none; }
+.copy-status { margin: 0; font-size: .9rem; color: var(--say); min-height: 1.4em; }
+.prompt-text {
+  margin: 0;
+  padding: 16px 20px;
+  background: var(--code-bg);
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: .78rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 360px;
+  overflow: auto;
+  color: var(--ink);
+  min-height: 120px;
+}
+.panel.expanded .prompt-text { max-height: none; }
+.prompt-empty { color: var(--ink-soft); font-family: var(--body); font-size: .95rem; }
+.how { counter-reset: s; list-style: none; margin: 0; padding: 14px 20px 18px; display: grid; gap: 6px; font-size: .88rem; color: var(--ink-soft); }
+.how li { counter-increment: s; }
+.how li::before { content: counter(s) ". "; font-family: var(--mono); color: var(--accent); }
+
+/* Phone copy bar */
+.copybar {
+  display: none;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  align-items: center;
+  gap: 10px;
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  background: var(--sheet);
+  border-top: 1px solid var(--rule);
+  box-shadow: 0 -6px 18px rgba(0, 0, 0, .08);
+}
+.bar-text { display: grid; flex: 1 1 auto; min-width: 0; }
+.bar-title { font-size: .66rem; color: var(--ink-soft); }
+.bar-status { font-size: .88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.copybar .btn { padding: 9px 14px; }
+
+/* Reference */
+.basics-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px 32px; }
+.basics-grid li { margin: 0; max-width: 46ch; }
+.basics-grid strong { display: block; font-family: var(--display); font-size: 1.12rem; font-weight: 600; margin-bottom: 2px; }
+.ai-note { margin: 24px 0 0; padding: 12px 14px; border: 1px dashed var(--rule); border-radius: 10px; color: var(--ink-soft); font-size: .95rem; max-width: 84ch; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 12px; background: var(--sheet); }
+table { border-collapse: collapse; width: 100%; min-width: 660px; font-size: .93rem; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 500; font-size: .68rem; color: var(--ink-soft); }
+tr:last-child td { border-bottom: 0; }
+td.num { font-family: var(--mono); font-size: .85rem; font-variant-numeric: tabular-nums; }
+tr.early td { background: var(--accent-tint); }
+.table-note { font-size: .87rem; color: var(--ink-soft); margin: 10px 0 28px; max-width: 92ch; }
+.college-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 470px), 1fr)); gap: 16px; }
+.college { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 20px; display: grid; gap: 12px; align-content: start; scroll-margin-top: 16px; min-width: 0; }
+.college-head { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; justify-content: space-between; }
+.college h3 { font-family: var(--display); font-size: 1.35rem; font-weight: 600; margin: 0; line-height: 1.2; }
+.full { margin: -8px 0 0; color: var(--ink-soft); font-size: .88rem; }
+.chip { font-family: var(--mono); font-size: .72rem; padding: 3px 9px; border-radius: 999px; background: var(--code-bg); color: var(--ink-soft); }
+.chip.early { background: var(--mail-red); color: var(--on-red); }
+.mission { margin: 0; padding-left: 14px; border-left: 2px solid var(--rule); font-family: var(--display); font-size: 1rem; line-height: 1.55; }
+.mission p { margin: 0 0 8px; }
+.mission p:last-child { margin-bottom: 0; }
+.mission-label { display: block; font-size: .64rem; color: var(--ink-soft); margin-bottom: 4px; }
+.kv { display: grid; grid-template-columns: 7.6rem minmax(0, 1fr); gap: 8px 14px; margin: 0; font-size: .93rem; }
+.kv dt { font-size: .64rem; color: var(--ink-soft); padding-top: .3rem; }
+.kv dd { margin: 0; min-width: 0; }
+.links { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .87rem; margin: 0; }
+.foot { color: var(--ink-soft); font-size: .86rem; border-top: 1px solid var(--rule); padding-top: 16px; display: grid; gap: 6px; }
+.foot p { margin: 0; max-width: 92ch; }
+
+@media (min-width: 1000px) {
+  .tool { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 48px; }
+  .panel {
+    position: sticky;
+    top: calc(env(safe-area-inset-top, 0px) + 16px);
+    max-height: calc(100vh - 32px - env(safe-area-inset-top, 0px));
+  }
+  .panel .prompt-text { flex: 1 1 auto; max-height: none; min-height: 0; }
+  .expand-btn { display: none; }
+}
+@media (max-width: 999px) {
+  body.has-person .copybar { display: flex; }
+  body.has-person .page { padding-bottom: 132px; }
+}
+@media (max-width: 480px) {
+  .page { gap: 44px; padding-block: 28px 56px; }
+  .kv { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .kv dd { margin-bottom: 8px; }
+  .qbody { padding-left: 0; }
+  .sel-list li { grid-template-columns: minmax(0, 1fr); }
+  .panel-head, .prompt-text, .how { padding-left: 16px; padding-right: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; scroll-behavior: auto !important; }
+}
+</style>
+
+<div class="airmail" aria-hidden="true"></div>
+<main class="page">
+  <header class="masthead">
+    <p class="eyebrow">US recommendation letters · Fall 2027 entry</p>
+    <h1>Writing for Parth Chapper</h1>
+    <p class="optional-note"><strong>This page is optional.</strong> It's here to make writing my letter quicker and easier for you. If you'd rather write it your own way, please do.</p>
+    <p class="lede">Thank you for helping with my US university applications. Pick your name, answer a few questions about what you have seen of me, and choose the universities. The page turns your answers into a master prompt for ChatGPT, Claude, Gemini or Copilot, which drafts your letter straight away without asking you the questions again.</p>
+    <p class="who">Parth Chapper · Year 13 · GEMS Metropole School, Motor City, Dubai. Your answers stay in your browser; nothing is sent to me or anyone else.</p>
+    <div class="dates">
+      <div class="date-cell urgent"><span class="date">1 Nov 2026</span><span class="what">Princeton early deadline. Letters for Princeton are needed by this date.</span></div>
+      <div class="date-cell"><span class="date">30 Nov 2026</span><span class="what">UC application closes (Berkeley, UCLA). No letters unless Berkeley invites them.</span></div>
+      <div class="date-cell"><span class="date">Early Jan 2027</span><span class="what">Regular Decision deadlines for the other Common App colleges.</span></div>
+      <div class="date-cell"><span class="date">10 Jan 2027</span><span class="what">UC Berkeley letters, only if Berkeley invites Parth to send them.</span></div>
+    </div>
+  </header>
+
+  <section class="chooser" id="step-who" aria-labelledby="who-h">
+    <p class="eyebrow">Step 1</p>
+    <h2 id="who-h">Who's writing?</h2>
+    <p class="section-sub">Choose your name. If you're not listed, choose “Any other teacher”.</p>
+    <div class="choose-groups">
+      <div><p class="group-label">Current teachers</p><div class="choose-grid" id="grid-current"></div></div>
+      <div><p class="group-label">Other recommenders</p><div class="choose-grid" id="grid-other"></div></div>
+      <div><p class="group-label">School</p><div class="choose-grid" id="grid-school"></div></div>
+    </div>
+  </section>
+
+  <div class="tool">
+    <div class="steps" id="steps"></div>
+    <aside class="panel" id="panel" aria-labelledby="panel-h">
+      <div class="airmail thin" aria-hidden="true"></div>
+      <div class="panel-head">
+        <p class="eyebrow" style="margin:0">Step 5</p>
+        <h2 id="panel-h">Your master prompt</h2>
+        <p class="panel-for" id="panel-for">Pick your name to start. The prompt fills in as you answer.</p>
+        <div class="meter" aria-hidden="true"><span id="meter-fill"></span></div>
+        <p class="panel-status" id="panel-status">No answers yet.</p>
+        <div class="btns">
+          <button type="button" class="btn primary" id="copy-btn" disabled>Copy master prompt</button>
+          <button type="button" class="btn expand-btn" id="expand-btn" aria-expanded="false" aria-controls="prompt-text">Show all</button>
+        </div>
+        <p class="copy-status" id="copy-status" role="status"></p>
+      </div>
+      <pre class="prompt-text" id="prompt-text" tabindex="0"><span class="prompt-empty">Your master prompt will appear here: your answers, the universities you choose, the verified facts about Parth and the rules that keep the draft accurate.</span></pre>
+      <ol class="how">
+        <li>Copy the master prompt.</li>
+        <li>Paste it into ChatGPT, Claude, Gemini or Copilot.</li>
+        <li>It drafts your letter straight away from your answers.</li>
+        <li>Edit the draft into your own voice and check every fact.</li>
+      </ol>
+    </aside>
+  </div>
+
+  <section class="basics" aria-labelledby="basics-h">
+    <h2 id="basics-h">Before you write: what a US letter is for</h2>
+    <p class="section-sub">If you usually write UK-style references, these are the differences that matter most.</p>
+    <ul class="basics-grid">
+      <li><strong>Evidence over summary</strong>Readers want two or three specific moments they can picture: what happened, what Parth did and why it mattered.</li>
+      <li><strong>Comparisons carry weight</strong>Say how he compares with students you have taught across your career, and give the reason.</li>
+      <li><strong>Character counts</strong>How he treats classmates, handles setbacks and changes the room is read alongside his ability.</li>
+      <li><strong>Your own voice</strong>First person is expected. About one page is typical; Caltech says letters usually run about a page.</li>
+      <li><strong>Skip the list</strong>Colleges already have his activities and honours. Your letter is the one place they hear from someone who watched him learn.</li>
+      <li><strong>Candour builds trust</strong>A real difficulty he worked through is more convincing than unbroken praise.</li>
+    </ul>
+    <p class="ai-note">If you use AI, keep the substance yours. The master prompt drafts only from your answers and the verified facts. Please edit the draft into your own voice and make sure you stand behind every sentence.</p>
+  </section>
+
+  <section class="colleges" aria-labelledby="colleges-h">
+    <h2 id="colleges-h">The ten universities</h2>
+    <p class="section-sub">Parth is applying early to Princeton. Its Single-Choice Early Action rules out early rounds at other private US colleges, so the other private colleges are Regular Decision; Georgia Tech, a public university, may be Early Action 2. UC Berkeley and UCLA use the University of California's own application, open 1 October to 30 November 2026. Checked against official pages on 15–16 October 2026.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th scope="col">University</th><th scope="col">Round</th><th scope="col">Apply by</th><th scope="col">Teacher letters</th></tr></thead>
+        <tbody id="deadline-rows"></tbody>
+      </table>
+    </div>
+    <p class="table-note">*Caltech hasn't posted its 2027 Regular Decision date yet; it was 5 January last cycle. Cornell accepts supporting materials, including letters, until 19 January. Georgia Tech's documents are due 16 November for Early Action 2 and 22 January for Regular Decision. UC Berkeley sends letter invitations from October to early December; invited letters are due 10 January.</p>
+    <div class="college-grid" id="college-grid"></div>
+  </section>
+
+  <footer class="foot">
+    <p>Mission statements are quoted from each university's own pages. Deadlines and letter rules come from official admissions pages; dates can change, so each card links to its source.</p>
+    <p>Prepared by Parth Chapper for his recommenders.</p>
+  </footer>
+</main>
+
+<div class="copybar" id="copybar">
+  <div class="bar-text"><span class="bar-title">Master prompt</span><span class="bar-status" id="bar-status">0 answered</span></div>
+  <button type="button" class="btn" id="bar-view">View</button>
+  <button type="button" class="btn primary" id="bar-copy">Copy</button>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- Verified facts (used in the prompt only) ---------- */
+  var FACTS = {
+    imo: { text: "International Mathematical Olympiad (IMO) 2026, Shanghai: contestant for the UAE.", rule: "This is the 67th IMO. Don't confuse it with other “Olympiad” certificates such as SOF or IOF, which are separate, smaller competitions." },
+    spaceOly: { text: "UAE Space Olympiad 2024: 3rd rank, Senior category." },
+    cern: { text: "CERN Beamline for Schools 2026: team proposal successfully submitted.", rule: "Say “submitted”. Never “selected” or “won”." },
+    leaf: { text: "Leaf “The Mathematics of Morality”: Winter 2026 finalist.", rule: "The certificate says top 10% of applicants." },
+    roles: { text: "School roles: prefect, Science Leader, Math Leader, and Innovation Leader for two years.", rule: "Use these titles exactly." },
+    hoy: { text: "GEMS Metropole School Head of Year Award, Year 10." },
+    alevels: { text: "Four A-Levels, including Further Mathematics, Chemistry and Physics." },
+    tsp: { text: "Founded and leads The Steamology Project (TSP), a STEM club at the school. Parth's own figures: about 500 students reached, run with about 10 helpers.", rule: "Use these figures only if my answer about TSP includes them, and leave out any grade-improvement claim." }
+  };
+  var GLOBAL_RULE = "Don't add titles, awards or figures that aren't listed here.";
+
+  /* ---------- Background for the prompt (interim; Parth's full activities list to follow) ---------- */
+  var ACTIVITIES = [
+    "Leads Al-Falaj, a six-person student team designing a CubeSat (Al-Falaj SAT-1) to spot harmful algal blooms near UAE desalination plants; he designed its avionics boards (data handling, power, attitude control).",
+    "Wrote a Python app, and the mathematics behind it, for “artificial Lagrange points” (continuous-thrust equilibria in the Earth–Moon system); a technical paper on it has been submitted.",
+    "Co-wrote a paper on a gallium-fuelled applied-field MPD (plasma) thruster concept with a student from MIT and one from UC Berkeley.",
+    "Has technical and leadership roles on the school's Formula Student / Shell Eco-Marathon team (electrical systems, steering, brakes).",
+    "Runs Stark 3D Printing with one partner as its CAD and technical lead (about two years).",
+    "Built career-interest (RIASEC) and personality (OCEAN) assessments for Career Horizons, a UAE counselling company.",
+    "Building a self-driving go-kart."
+  ];
+  var PORTFOLIO_URL = "";
+
+  var SUBJECTS = [
+    ["Further Mathematics", "maths"], ["Mathematics", "maths"], ["Physics", "science"], ["Chemistry", "science"],
+    ["Biology", "science"], ["Computer Science", "science"], ["English", "humanities"], ["History", "humanities"],
+    ["Economics", "humanities"], ["Business", "humanities"], ["Geography", "humanities"], ["Psychology", "humanities"],
+    ["Arabic", "humanities"], ["Other", "other"]
+  ];
+  var TAUGHT = ["Less than a year", "One year", "Two years", "Three years or more"];
+
+  /* ---------- Questions (shown on the page only) ---------- */
+  var Q = {
+    memorable: { q: "What is one thing about Parth that you find memorable?", hint: "A habit, a moment, a question he asked. Small and specific beats big and general." },
+    words: { q: "What are the first three words that come to mind when you think of him?", hint: "Go with your instinct. The letter will back each word with an example.", rows: 2 },
+    moment_maths: { q: "Describe one lesson or problem where his approach stood out. What was the topic, and what exactly did he do?", hint: "For example, a method you hadn't taught, a generalisation, or a flaw he spotted. Caltech asks for evidence of depth of understanding." },
+    moment_science: { q: "Describe one practical or lesson where he stood out. What happened, and what did he do?", hint: "Caltech's advice to recommenders mentions leadership during a lab project and persevering after a failed lab trial." },
+    moment_humanities: { q: "Which piece of his writing, or which class discussion, do you remember? Quote a line if you can.", hint: "Caltech asks its humanities letter to comment on writing and welcomes short excerpts." },
+    moment_other: { q: "Describe one moment in your class when he stood out. What happened?", hint: "When it was, what happened and what he did." },
+    tsp: { q: "What have you personally seen of The Steamology Project: a session, a student it helped, how he runs it? Which figures could you vouch for?", hint: "Your letter is the only place TSP appears in his application, so concrete detail matters." },
+    labtalk: { q: "Have you talked with Parth about his projects? What did he explain, and how?", hint: "If not, ask him about one before you write: how an algal bloom shows up in a satellite's spectral images, why his thruster paper uses liquid gallium, or how he chooses between PLA and PETG for 3D printing." },
+    setback: { q: "When has he faced a hard problem or a setback, and how did he respond?", hint: "Caltech asks recommenders for evidence of perseverance." },
+    others: { q: "How does he work with classmates? Describe one moment that shows it.", hint: "Collaboration is among the values Caltech and Carnegie Mellon name." },
+    curiosity_maths: { q: "Has he taken an idea further than the course required? How did you notice?", hint: "Stanford calls this kind of curiosity intellectual vitality." },
+    curiosity_science: { q: "What is the most unexpected question he has asked you, in or after class?", hint: "Stanford calls this kind of curiosity intellectual vitality." },
+    curiosity_humanities: { q: "How does he handle questions with no single right answer, and how has his writing changed over time?", hint: "Caltech names improvement as a writer over time." },
+    curiosity_other: { q: "What questions does he ask that go beyond the course?", hint: "Stanford calls this kind of curiosity intellectual vitality." },
+    f_debates: { q: "Which of your moral debates do you remember him in? What did he argue, and did he ever change his mind?", hint: "This range of thinking is what your letter can add." },
+    f_unusual: { q: "How did he respond to the unusual mathematics you brought into class?", hint: "What he did with it, not only that he enjoyed it." },
+    f_disagree: { q: "How did he treat classmates who disagreed with him?", hint: "Princeton's mission values learning from diverse perspectives." },
+    f_thread: { q: "Knowing what he has done since (the 2026 IMO, the Leaf “Mathematics of Morality” finalist place), what links the student you taught to the one applying now?", hint: "Growth over years is something only a teacher from earlier can show." },
+    c_programme: { q: "How does his programme of four A-Levels, including Further Mathematics, compare with the most demanding programme available at the school?", hint: "US readers judge rigour against what the school offers." },
+    c_roles: { q: "What did he actually do as prefect, Science Leader, Math Leader and Innovation Leader?", hint: "Titles mean little to readers without what he did in them." },
+    c_colleagues: { q: "What do colleagues say about him? Paste two or three short comments if you have them.", hint: "Quoted comments add credibility to a counselor letter." },
+    c_context: { q: "What should a US reader know about the school or his circumstances? For example, class-rank policy or the grading scale.", hint: "Context helps readers interpret his record fairly." },
+    h_prefect: { q: "What does he do as a prefect that people would notice if he stopped?", hint: "Specific duties rather than the title." },
+    h_others: { q: "How does he treat younger students and staff? Give one example.", hint: "Every college reads character alongside ability." },
+    h_responsibility: { q: "Describe a time he took responsibility when something went wrong.", hint: "Princeton's mission names ethical leadership." },
+    h_growth: { q: "How has he changed since you have known him?", hint: "You have watched him over years." },
+    h_staff: { q: "What do other staff say about him?", hint: "Short quotes are useful to the counsellor." },
+    compare: { q: "Your letter will describe Parth as one of the best students you have taught. What sets him apart from the other strong students you've taught?", hint: "You can adjust this line when you edit the draft." },
+    compare_year: { q: "Your letter will describe Parth as one of the strongest students in his year group. What sets him apart?", hint: "You can adjust this line when you edit the draft." },
+    extra: { optional: true, q: "Anything else you want the letter to say?", hint: "Optional." },
+    takeaway: { q: "If an admissions reader remembers one thing from your letter, what should it be?", hint: "This becomes the letter's main message." }
+  };
+
+  /* Short labels for each answer in the prompt; the questions themselves stay on the page. */
+  var LABELS = {
+    memorable: "Something memorable about Parth",
+    words: "First words that come to mind",
+    moment_maths: "A lesson or problem where his approach stood out",
+    moment_science: "A practical or lesson where he stood out",
+    moment_humanities: "His writing or a class discussion I remember",
+    moment_other: "A moment in my class when he stood out",
+    tsp: "What I have seen of The Steamology Project",
+    labtalk: "What he has explained to me about his projects",
+    setback: "How he handles hard problems and setbacks",
+    others: "How he works with classmates",
+    curiosity_maths: "Taking ideas further than the course",
+    curiosity_science: "An unexpected question he asked me",
+    curiosity_humanities: "Questions without one right answer, and how his writing has grown",
+    curiosity_other: "Questions he asks beyond the course",
+    f_debates: "Our moral debates",
+    f_unusual: "How he responded to unusual mathematics",
+    f_disagree: "How he treated classmates who disagreed with him",
+    f_thread: "What links the student I taught to the applicant now",
+    c_programme: "His programme compared with the most demanding at the school",
+    c_roles: "What he actually did in his school roles",
+    c_colleagues: "What colleagues say about him",
+    c_context: "Context about the school and his circumstances",
+    h_prefect: "What he does as a prefect",
+    h_others: "How he treats younger students and staff",
+    h_responsibility: "A time he took responsibility",
+    h_growth: "How he has changed",
+    h_staff: "What other staff say about him"
+  };
+
+  var DRAFT = {
+    teacher: [
+      "Write the letter in my voice: first person, plain and warm, British spelling. About one page (500–750 words). Structure:",
+      "1. How I know Parth: subject, level, how long, class size, my teaching experience.",
+      "2. One sentence on what most distinguishes him (use my one-thing-to-remember answer if I gave one).",
+      "3. Two or three specific moments from my answers: what happened, what he did, why it matters.",
+      "4. The comparison with other students I have taught, using my reason.",
+      "5. Character: how he works with others and handles setbacks.",
+      "6. A clear closing recommendation."
+    ],
+    counsellor: [
+      "Write the counselor letter in my voice: first person, plain and warm, British spelling. About one page (500–800 words). Structure:",
+      "1. Context: GEMS Metropole School, the A-Level system, my role and how well I know Parth.",
+      "2. His programme and its rigour compared with what the school offers; predicted grades if I give them.",
+      "3. Leadership and contribution: what he actually did in each role.",
+      "4. Character, using colleagues' comments I give you.",
+      "5. Distinctions in context, and the comparison with his year group.",
+      "6. A clear closing recommendation.",
+      "Also remind me what the School Report usually includes: transcript, predicted grades and the school profile."
+    ],
+    hoy: [
+      "Write 150–300 words of notes the counsellor can use, grouped under: responsibility, roles in practice, how he treats others, growth. Keep my own words where you can.",
+      "Only if I ask, turn the notes into a one-page additional letter in my voice (first person, British spelling)."
+    ]
+  };
+
+  var GENERIC_GOES = "Parth will confirm which colleges your letter goes to. Princeton's early deadline is 1 Nov 2026 and most others fall in early January. UC Berkeley takes letters only if it invites Parth (due 10 Jan 2027); UCLA doesn't accept letters.";
+
+  /* ---------- People ---------- */
+  var PEOPLE = [
+    { id: "burford", group: "current", kind: "teacher", label: "Harri Burford", sub: "Current teacher", defaultName: "Harri Burford" },
+    { id: "mosafeer", group: "current", kind: "teacher", label: "Mohammad Mosafeer", sub: "Current teacher", defaultName: "Mohammad Mosafeer" },
+    { id: "snell", group: "current", kind: "teacher", label: "Catharine Snell", sub: "Current teacher", defaultName: "Catharine Snell" },
+    {
+      id: "suleman", group: "current", kind: "teacher", label: "Nadeem Suleman", sub: "Further Mathematics", defaultName: "Nadeem Suleman",
+      subject: "Further Mathematics", taught: "Two years", special: "tsp", facts: ["imo", "leaf", "roles", "tsp"],
+      job: "Yours is the core academic letter. It shows how Parth's mathematical thinking works up close. It is also the only place in his application where The Steamology Project, the STEM club he founded and leads, will appear. He has left it off his activities list on purpose, so the colleges hear about it from you.",
+      note: "This complements the full packet Parth already gave you.",
+      goes: "All his Common App colleges, starting with Princeton's early deadline on 1 Nov 2026. Carnegie Mellon reads only one teacher letter, so Parth will choose which one goes there. If UC Berkeley invites letters, they're due 10 Jan 2027.",
+      extraRules: [
+        "This letter is the only place The Steamology Project appears in his application, so describe what I saw of it in concrete terms."
+      ]
+    },
+    { id: "thomas", group: "current", kind: "teacher", label: "Ammu Thomas", sub: "Current teacher", defaultName: "Ammu Thomas" },
+    {
+      id: "usman", group: "current", kind: "teacher", label: "Muhammad Usman", sub: "Chemistry", defaultName: "Muhammad Usman",
+      subject: "Chemistry", taught: "Two years", special: "lab", facts: ["roles", "spaceOly", "imo", "cern"],
+      job: "Yours is the science letter. It shows Parth as an experimenter at the bench as well as on paper, and it carries equal weight with the maths letter at colleges that ask for two.",
+      note: "If you can recall only a few specific moments, a shorter letter built on them is stronger than a longer general one. A ten-minute conversation with Parth about one of his projects would give you first-hand material; the project question below suggests topics.",
+      goes: "Most of his colleges ask for two teacher letters. If yours is one of Princeton's two, it's needed by 1 Nov 2026. The rest are due in early January, and UC Berkeley's by 10 Jan 2027 if it invites letters.",
+      extraRules: ["If my material is thin, write a shorter letter built on what I do know rather than padding it."]
+    },
+    {
+      id: "former-maths", group: "other", kind: "teacher", label: "Former Further Maths teacher", sub: "Taught Parth in earlier years", defaultName: "",
+      subject: "Further Mathematics", special: "former", facts: ["imo", "leaf"],
+      job: "You saw a side of Parth the other letters may miss, in the moral debates you built around unusual mathematics. If you write, aim for that range of thinking rather than a second account of his maths results.",
+      goes: "An optional third letter. Parth will tell you which colleges he sends it to and when.",
+      extraRules: ["This is an optional additional letter. Focus on his range of thinking (the debates, the unusual mathematics) rather than a second account of his current maths results."]
+    },
+    { id: "other-teacher", group: "other", kind: "teacher", label: "Any other teacher", sub: "Not on the list? Any subject", defaultName: "" },
+    {
+      id: "counsellor", group: "school", kind: "counsellor", label: "Mr Fag", sub: "Counsellor", defaultName: "Mr Fag", title: "Acting Counsellor",
+      facts: ["alevels", "roles", "imo", "spaceOly", "cern", "hoy"],
+      job: "You complete the School Report and counselor letter that every one of his Common App colleges requires. Your letter gives the context teachers can't: his whole record, the programme he chose and how he fits into the school.",
+      goes: "Princeton (early): School Report, counselor letter and transcript, with predicted grades if the school issues them, by 1 Nov 2026. Georgia Tech, if Parth applies Early Action 2 on 2 Nov: documents by 16 Nov. Other Common App colleges: early January 2027, then mid-year reports (Johns Hopkins expects its by mid-February). The UC application (Berkeley, UCLA) uses self-reported grades, so nothing is needed from you when he applies.",
+      extraRules: ["Write about Parth as the school sees him; don't repeat what his teachers will cover in detail."]
+    },
+    {
+      id: "head-of-year", group: "school", kind: "hoy", label: "Mr Waldon", sub: "Head of Year", defaultName: "Mr Waldon", title: "Head of Year",
+      facts: ["roles", "hoy"],
+      job: "You see Parth across the whole school day. Your observations are most useful fed into the counsellor's letter. A separate letter is optional and worth sending only if it adds something the others don't.",
+      goes: "Into Mr Fag's counselor letter. Princeton's early materials are due 1 Nov 2026, so earlier input helps."
+    }
+  ];
+  var LEGACY = { sulleman: "suleman", humanities: "other-teacher" };
+
+  /* ---------- Universities ---------- */
+  var UNIS = [
+    {
+      id: "caltech", name: "Caltech", full: "California Institute of Technology", tag: "Early Jan",
+      round: "Regular Decision", deadline: "Early Jan 2027", tableDate: "Early Jan 2027*", tableLetters: "2: one maths or science, one humanities",
+      deadlinePlain: "Regular Decision, deadline early January 2027 (5 January last cycle; the 2027 date isn't posted yet)",
+      deadlineNote: "The 2027 date isn't posted yet; it was 5 January last cycle.",
+      letters: "Two teacher letters: one from a maths or science teacher, and one from a humanities or social-science teacher in a class with significant writing, who should comment on his writing. Letters usually run about a page. One extra letter is allowed if it doesn't overlap with the other two.",
+      show: "Depth of understanding of difficult concepts, contributions to the class, competitions and his effect on teams, perseverance (a failed lab trial, a hard problem), and where he stands among students across your career. Caltech faculty help review files, so technical detail is welcome.",
+      missionLabel: "Mission",
+      mission: ["The mission of the California Institute of Technology is to expand human knowledge and benefit society through research integrated with education. We investigate the most challenging, fundamental problems in science and technology in a singularly collegial, interdisciplinary atmosphere, while educating outstanding students to become creative members of society."],
+      also: [],
+      links: [["Advice for recommenders", "https://www.admissions.caltech.edu/apply/first-year-applicants/teacher-evaluations/writing-advice-for-recommenders"], ["Mission", "https://catalog.caltech.edu/current/general-information/mission/"], ["Deadlines", "https://admissions.caltech.edu/apply/first-year-applicants/deadlines"]]
+    },
+    {
+      id: "cmu", name: "Carnegie Mellon", full: "Carnegie Mellon University", tag: "4 Jan · reads one",
+      round: "Regular Decision", deadline: "4 Jan 2027", tableDate: "4 Jan 2027", tableLetters: "1 teacher",
+      deadlinePlain: "Regular Decision, deadline 4 January 2027",
+      deadlineNote: "",
+      letters: "One teacher letter plus the counselor's. CMU accepts a third letter, but its committees consider only two. The teacher needn't teach his intended subject; CMU asks for the one who knows him best.",
+      show: "Its stated values are dedication, impact, collaboration, creativity, and empathy and compassion. Show him building, fixing and improving things with other people.",
+      missionLabel: "Vision and mission",
+      mission: [
+        "Vision: Carnegie Mellon University will have a transformative impact on society through continual innovation in education, research, creativity and entrepreneurship.",
+        "To create a transformative educational experience for students focused on deep disciplinary knowledge; problem-solving; leadership, communication and interpersonal skills; and personal health and well-being.",
+        "To cultivate a transformative university community committed to (a) attracting and retaining diverse, world-class talent; (b) creating a collaborative environment open to the free exchange of ideas, where research, creativity, innovation and entrepreneurship can flourish; and (c) ensuring individuals can achieve their full potential.",
+        "To impact society in a transformative way — regionally, nationally and globally — by engaging with partners outside the traditional borders of the university campus."
+      ],
+      also: [["Motto", "“My heart is in the work” (Andrew Carnegie)."]],
+      links: [["Letter rules", "https://www.cmu.edu/admission/admission/admission-consideration"], ["Mission", "https://www.cmu.edu/about/mission/"], ["Deadlines", "https://www.cmu.edu/admission/admission/application-plans-deadlines"]]
+    },
+    {
+      id: "cornell", name: "Cornell", full: "Cornell University", tag: "2 Jan",
+      round: "Regular Decision", deadline: "2 Jan 2027", tableDate: "2 Jan 2027", tableLetters: "2 (one maths, science or CS for Engineering)",
+      deadlinePlain: "Regular Decision, deadline 2 January 2027, with letters and other supporting materials accepted until 19 January",
+      deadlineNote: "Supporting materials, including letters, by 19 Jan 2027.",
+      letters: "Two teacher letters. For Duffield Engineering, at least one must come from a maths, science or computer science teacher.",
+      show: "Its core values include purposeful discovery, free and open inquiry, exploration across boundaries and changing lives through engagement. Cornell Engineering asks applicants whether their essays and recommendations reflect their strongest personal attributes.",
+      missionLabel: "Mission",
+      mission: ["Cornell’s mission is to discover, preserve and disseminate knowledge, to educate the next generation of global citizens, and to promote a culture of broad inquiry throughout and beyond the Cornell community. Cornell also aims, through public service, to enhance the lives and livelihoods of students, the people of New York and others around the world."],
+      also: [["Founding principle", "“I would found an institution where any person can find instruction in any study.” Ezra Cornell, 1868."]],
+      links: [["Engineering letter rule", "https://admissions.cornell.edu/first-year-duffield-engineering-applicants"], ["Mission", "https://www.cornell.edu/about/mission.cfm"], ["Deadlines", "https://admissions.cornell.edu/how-to-apply/first-year-international-applicants"]]
+    },
+    {
+      id: "gatech", name: "Georgia Tech", full: "Georgia Institute of Technology", tag: "Optional",
+      round: "Early Action 2 or Regular", deadline: "2 Nov 2026 (EA2)", tableDate: "2 Nov 2026 (EA2) · 6 Jan 2027", tableLetters: "Optional, up to 2",
+      deadlinePlain: "Early Action 2 for non-Georgia applicants, deadline 2 November 2026 (documents including letters by 16 November); otherwise Regular Decision, 6 January 2027 (documents by 22 January)",
+      deadlineNote: "Early Action 2: letters by 16 Nov 2026. Regular Decision: apply by 6 Jan 2027, documents by 22 Jan.",
+      letters: "Optional: up to two teacher letters (core academic subjects work best) and one counselor letter, due by the document deadline.",
+      show: "Technology aimed at improving people's lives. Georgia Tech dropped its supplemental short answer this cycle, so an optional letter is one of the few places it hears about Parth beyond his personal essay and activities.",
+      missionLabel: "Mission",
+      mission: ["The Georgia Institute of Technology is a public research university established by the state of Georgia in Atlanta in 1885 and committed to developing leaders who advance technology and improve the human condition."],
+      also: [["Vision 2030", "“…developing exceptional leaders from all backgrounds ready to produce novel ideas and create solutions with real human impact.”"], ["Motto", "Progress and Service."]],
+      links: [["Letter rules", "https://admission.gatech.edu/first-year/recommendations"], ["Mission", "https://strategicplan.gatech.edu/vision"], ["Deadlines", "https://admission.gatech.edu/first-year/deadlines"]]
+    },
+    {
+      id: "harvard", name: "Harvard", full: "Harvard College", tag: "1 Jan",
+      round: "Regular Decision", deadline: "1 Jan 2027", tableDate: "1 Jan 2027", tableLetters: "2 teachers",
+      deadlinePlain: "Regular Decision, deadline 1 January 2027",
+      deadlineNote: "",
+      letters: "Two teacher letters, plus the counselor's letter and School Report.",
+      show: "Contribution: how he makes the people around him better in class, in teams and across the school. Harvard describes its education as intellectually, socially and personally transformative.",
+      missionLabel: "Mission (Harvard College)",
+      mission: ["The mission of Harvard College is to educate the citizens and citizen-leaders for our society. We do this through our commitment to the transformative power of a liberal arts and sciences education."],
+      also: [],
+      links: [["Requirements", "https://college.harvard.edu/admissions/apply/first-year-applicants/application-requirements"], ["Mission", "https://college.harvard.edu/about/mission-vision-history"]]
+    },
+    {
+      id: "jhu", name: "Johns Hopkins", full: "Johns Hopkins University", tag: "2 Jan",
+      round: "Regular Decision", deadline: "2 Jan 2027", tableDate: "2 Jan 2027", tableLetters: "2 teachers",
+      deadlinePlain: "Regular Decision, deadline 2 January 2027",
+      deadlineNote: "",
+      letters: "Two teacher evaluations, plus the counselor's report.",
+      show: "Self-driven inquiry and original research: what he investigates when nobody assigns it. Hopkins calls itself America's first research university.",
+      missionLabel: "Mission",
+      mission: ["The mission of The Johns Hopkins University is to educate its students and cultivate their capacity for lifelong learning, to foster independent and original research, and to bring the benefits of discovery to the world."],
+      also: [],
+      links: [["Requirements and deadlines", "https://apply.jhu.edu/apply/process/"], ["Mission", "https://finance.jhu.edu/our-organization/jhu-mission-statement/"]]
+    },
+    {
+      id: "princeton", name: "Princeton", full: "Princeton University", early: true, tag: "Early · 1 Nov",
+      round: "Single-Choice Early Action", deadline: "1 Nov 2026", tableDate: "1 Nov 2026", tableLetters: "2 teachers, core subjects",
+      deadlinePlain: "Single-Choice Early Action, deadline 1 November 2026 (Parth's early application)",
+      deadlineNote: "Parth's early application. Regular Decision would have been 1 Jan 2027.",
+      letters: "Two teacher letters from core academic subjects (English, languages, humanities, social sciences, natural sciences or maths), plus the counselor's letter and School Report.",
+      show: "Independent thinking and a habit of research; service to others; ethical leadership; learning from people who see things differently. Princeton's stated aspirations include preparing students for lives of service, civic engagement and ethical leadership.",
+      missionLabel: "Mission",
+      mission: ["Princeton University advances learning through scholarship, research, and teaching of unsurpassed quality, with an emphasis on undergraduate and doctoral education that is distinctive among the world’s great universities, and with a pervasive commitment to serve the nation and the world."],
+      also: [["Informal motto", "“In the nation’s service and the service of humanity.”"]],
+      links: [["Application checklist", "https://admission.princeton.edu/apply/application-checklist"], ["Mission", "https://www.princeton.edu/node/263971"], ["Dates", "https://admission.princeton.edu/apply/application-dates-deadlines"]]
+    },
+    {
+      id: "stanford", name: "Stanford", full: "Stanford University", tag: "5 Jan",
+      round: "Regular Decision", deadline: "5 Jan 2027", tableDate: "5 Jan 2027", tableLetters: "2 teachers, core subjects",
+      deadlinePlain: "Regular Decision, deadline 5 January 2027",
+      deadlineNote: "",
+      letters: "Two letters from academic teachers, ideally Grade 11 or 12 (Years 12–13) in English, maths, science, world language or history/social studies. Classroom teachers are strongly preferred. A-Level predictions are required if available.",
+      show: "Academic excellence, which Stanford calls its primary criterion, and intellectual vitality: the questions he asks beyond the syllabus.",
+      missionLabel: "Founding Grant, 1885",
+      mission: ["Its object, to qualify its students for personal success, and direct usefulness in life; And its purposes, to promote the public welfare by exercising an influence in behalf of humanity and civilization, teaching the blessings of liberty regulated by law, and inculcating love and reverence for the great principles of government as derived from the inalienable rights of man to life, liberty, and the pursuit of happiness."],
+      also: [],
+      links: [["Letter rules", "https://admission.stanford.edu/apply/freshman/forms.html"], ["Founding Grant", "https://stanford.edu/about/history"], ["Deadlines", "https://admission.stanford.edu/apply/deadlines/"]]
+    },
+    {
+      id: "berkeley", name: "UC Berkeley", full: "University of California, Berkeley", tag: "If invited · 10 Jan",
+      round: "UC application", deadline: "30 Nov 2026", tableDate: "30 Nov 2026", tableLetters: "Only if invited (due 10 Jan)",
+      deadlinePlain: "University of California application, open 1 October to 30 November 2026. Letters only if Berkeley invites Parth: invitations go out October to early December, and invited letters are due 10 January 2027",
+      deadlineNote: "Apply by 30 Nov 2026. Letters only if Berkeley invites Parth: invitations go out October to early December, and letters are due 10 Jan 2027.",
+      letters: "Only applicants Berkeley invites may send letters: up to two, with at least one from a teacher of a core academic subject. If invited, Parth enters your details in Berkeley's portal and you receive an email with instructions. Unsolicited letters aren't accepted.",
+      show: "Berkeley Engineering names collaboration, innovation, excellence and societal impact as its values.",
+      missionLabel: "University of California mission",
+      mission: ["The distinctive mission of the University is to serve society as a center of higher learning, providing long-term societal benefits through transmitting advanced knowledge, discovering new knowledge, and functioning as an active working repository of organized knowledge. That obligation, more specifically, includes undergraduate education, graduate and professional education, research, and other kinds of public service, which are shaped and bounded by the central pervasive mission of discovering and advancing knowledge."],
+      also: [["Berkeley Engineering", "“At Berkeley Engineering, our mission is to educate leaders, create knowledge and serve society.”"], ["Motto", "Fiat Lux (“Let there be light”)."]],
+      links: [["Letter policy", "https://www.admissions.berkeley.edu/apply-to-berkeley/first-year-applicants-uc-berkeley/first-year-policy-changes/"], ["UC mission", "https://ucop.edu/about/mission/index.html"], ["Engineering mission", "https://engineering.berkeley.edu/about/mission-values"], ["UC dates", "https://admission.universityofcalifornia.edu/how-to-apply/applying-as-a-first-year/dates-and-deadlines.html"]]
+    },
+    {
+      id: "ucla", name: "UCLA", full: "University of California, Los Angeles", tag: "No letters", noLetters: true,
+      round: "UC application", deadline: "30 Nov 2026", tableDate: "30 Nov 2026", tableLetters: "Not accepted",
+      deadlinePlain: "University of California application, open 1 October to 30 November 2026",
+      deadlineNote: "Apply by 30 Nov 2026. Nothing is needed from teachers.",
+      letters: "UCLA doesn't require or accept letters of recommendation for first-year applicants. The only exceptions are specialty or professional programmes that run their own supplemental applications.",
+      show: "Nothing to tailor: UCLA doesn't read letters.",
+      missionLabel: "Mission",
+      mission: ["UCLA's primary purpose as a public research university is the creation, dissemination, preservation and application of knowledge for the betterment of our global society. To fulfill this mission, UCLA is committed to academic freedom in its fullest terms: We value open access to information, free and lively debate conducted with mutual respect for individuals, and freedom from intolerance. In all of our pursuits, we strive for excellence and diversity, recognizing that openness and inclusion produce true quality. These values underlie our three institutional responsibilities: education, research and public service."],
+      also: [],
+      links: [["Requirements", "https://admission.ucla.edu/apply/freshman/freshman-requirements"], ["Mission", "https://www.ucla.edu/about/mission-and-values"], ["UC dates", "https://admission.universityofcalifornia.edu/how-to-apply/applying-as-a-first-year/dates-and-deadlines.html"]]
+    }
+  ];
+  var TABLE_ORDER = ["princeton", "gatech", "berkeley", "ucla", "harvard", "cornell", "jhu", "cmu", "stanford", "caltech"];
+
+  /* ---------- State and storage ---------- */
+  var current = null;
+  var data = {};
+  var STORE_PREFIX = "rk3:";
+  var store = {
+    get: function (k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } },
+    set: function (k, v) { try { window.localStorage.setItem(k, v); } catch (e) { /* storage unavailable */ } }
+  };
+
+  function $(sel) { return document.querySelector(sel); }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function byId(id) { for (var i = 0; i < PEOPLE.length; i++) { if (PEOPLE[i].id === id) return PEOPLE[i]; } return null; }
+  function uniById(id) { for (var i = 0; i < UNIS.length; i++) { if (UNIS[i].id === id) return UNIS[i]; } return null; }
+  function sortedUnis() { return UNIS.slice().sort(function (a, b) { return a.name.localeCompare(b.name); }); }
+
+  function defaults(p) {
+    return {
+      about: { name: p.defaultName || "", subject: p.subject || "", subjectOther: "", title: p.title || "", taught: p.taught || "", context: "", experience: "", predicted: "" },
+      answers: {},
+      unis: [],
+      other: { on: false, name: "", info: "" }
+    };
+  }
+  function getData(p) {
+    if (data[p.id]) return data[p.id];
+    var d = defaults(p);
+    var raw = store.get(STORE_PREFIX + p.id);
+    if (raw) {
+      try {
+        var saved = JSON.parse(raw);
+        if (saved && typeof saved === "object") {
+          if (saved.about) for (var k in saved.about) { if (Object.prototype.hasOwnProperty.call(saved.about, k)) d.about[k] = saved.about[k]; }
+          if (saved.answers && typeof saved.answers === "object") d.answers = saved.answers;
+          if (Array.isArray(saved.unis)) d.unis = saved.unis.filter(function (id) { return !!uniById(id); });
+          if (saved.other) { d.other.on = !!saved.other.on; d.other.name = saved.other.name || ""; d.other.info = saved.other.info || ""; }
+        }
+      } catch (e) { /* ignore bad saved data */ }
+    }
+    data[p.id] = d;
+    return d;
+  }
+  function save(p) { store.set(STORE_PREFIX + p.id, JSON.stringify(getData(p))); }
+
+  function subjectRaw(p, d) { return d.about.subject || p.subject || ""; }
+  function subjectOf(p, d, fallback) {
+    var s = subjectRaw(p, d);
+    if (s === "Other") s = (d.about.subjectOther || "").trim();
+    return s || fallback || "[my subject]";
+  }
+  function categoryOf(p, d) {
+    if (p.kind !== "teacher") return null;
+    if (p.special === "former") return "maths";
+    var s = subjectRaw(p, d);
+    for (var i = 0; i < SUBJECTS.length; i++) { if (SUBJECTS[i][0] === s) return SUBJECTS[i][1]; }
+    return "other";
+  }
+  function questionsFor(p, d) {
+    if (p.kind === "counsellor") return ["memorable", "words", "c_programme", "c_roles", "c_colleagues", "c_context", "compare_year", "extra", "takeaway"];
+    if (p.kind === "hoy") return ["memorable", "words", "h_prefect", "h_others", "h_responsibility", "h_growth", "h_staff", "extra", "takeaway"];
+    if (p.special === "former") return ["memorable", "words", "f_debates", "f_unusual", "f_disagree", "f_thread", "compare", "extra", "takeaway"];
+    var cat = categoryOf(p, d);
+    var list = ["memorable", "words", "moment_" + cat];
+    if (p.special === "tsp") list.push("tsp");
+    if (p.special === "lab") list.push("labtalk");
+    list.push("setback", "others", "curiosity_" + cat, "compare", "extra", "takeaway");
+    return list;
+  }
+  function factsFor(p) { return p.facts || ["imo", "leaf", "spaceOly", "cern", "roles"]; }
+  function jobFor(p, d) {
+    if (p.job) return p.job;
+    var cat = categoryOf(p, d);
+    var s = "Your letter shows colleges how Parth learns and thinks in " + subjectOf(p, d, "your subject") + ", through moments only you saw.";
+    if (cat === "maths" || cat === "science") s += " Most of his colleges ask for two teacher letters, and Caltech and Cornell Engineering each want at least one from maths or science.";
+    if (cat === "humanities") s += " Caltech requires one letter from a humanities or social-science teacher, from a class with significant writing, that comments on Parth's writing. Yours may be that letter.";
+    return s;
+  }
+  function goesFor(p) { return p.goes || GENERIC_GOES; }
+  function isAnswered(qid, d) { return !!(d.answers[qid] && String(d.answers[qid]).trim()); }
+  function progress(p, d) {
+    var list = questionsFor(p, d).filter(function (id) { return !Q[id].optional; });
+    var done = list.filter(function (id) { return isAnswered(id, d); }).length;
+    return { done: done, total: list.length };
+  }
+  function displayName(p, d) { return (d.about.name || "").trim() || p.defaultName || p.label; }
+
+  /* ---------- Master prompt ---------- */
+  function buildPrompt(p, d) {
+    var L = [];
+    var nm = (d.about.name || "").trim() || p.defaultName || "[my name]";
+    var task = p.kind === "counsellor" ? "the counselor letter"
+      : p.kind === "hoy" ? "notes for the counselor letter (and an additional letter only if I ask)"
+      : "a teacher recommendation letter";
+    var qs = questionsFor(p, d);
+    var cmpId = qs.indexOf("compare_year") !== -1 ? "compare_year" : (qs.indexOf("compare") !== -1 ? "compare" : null);
+
+    L.push("You are an experienced US university admissions reader and recommendation-letter coach. Help me write " + task + " for my student Parth Chapper's US university applications (Fall 2027 entry). My answers are below. Draft straight away from them, without asking me questions first, and follow the rules exactly.");
+
+    L.push("", "ABOUT ME");
+    L.push("- Name as it should appear: " + nm);
+    if (p.kind === "teacher") L.push("- I teach Parth: " + subjectOf(p, d));
+    if ((d.about.title || "").trim()) L.push("- Job title: " + d.about.title.trim());
+    if (d.about.taught) L.push("- " + (p.kind === "teacher" ? "Taught him for" : "Known him for") + ": " + d.about.taught);
+    if ((d.about.context || "").trim()) L.push("- Class and level: " + d.about.context.trim());
+    if ((d.about.experience || "").trim()) L.push("- Years teaching: " + d.about.experience.trim());
+    if ((d.about.predicted || "").trim()) L.push("- His predicted grades: " + d.about.predicted.trim());
+    L.push("- School: GEMS Metropole School, Motor City, Dubai (UAE).");
+
+    L.push("", "WHAT PARTH HOPES MY LETTER DOES", jobFor(p, d));
+
+    L.push("", "MY ANSWERS (my own observations; build the letter from these)");
+    var shown = 0;
+    qs.forEach(function (id) {
+      if (id === "compare" || id === "compare_year" || id === "extra" || id === "takeaway") return;
+      if (!isAnswered(id, d)) return;
+      L.push("- " + LABELS[id] + ": " + String(d.answers[id]).trim());
+      shown++;
+    });
+    if (cmpId) {
+      var why = (d.answers[cmpId] || "").trim();
+      L.push("- Comparison: describe him as " + (cmpId === "compare_year" ? "one of the strongest students in his year group" : "one of the best students I have taught in my career") + ". " +
+        (why ? "What sets him apart: " + why : "Support this with the strongest specific moment in my answers, or leave a [placeholder] for the reason."));
+    }
+    if (isAnswered("takeaway", d)) L.push("- The one thing a reader should remember (make this the letter's main message): " + d.answers.takeaway.trim());
+    if (isAnswered("extra", d)) L.push("- Also include: " + d.answers.extra.trim());
+    if (!shown && !isAnswered("takeaway", d) && !isAnswered("extra", d) && !(cmpId && isAnswered(cmpId, d))) {
+      L.push("- I haven't written my examples yet. Draft the letter with clear [placeholders] where my specific examples should go.");
+    }
+
+    L.push("", "TARGET UNIVERSITIES");
+    var sel = TABLE_ORDER.map(uniById).filter(function (u) { return d.unis.indexOf(u.id) !== -1; });
+    var letterUnis = sel.filter(function (u) { return !u.noLetters; });
+    var targets = letterUnis.length + (d.other.on ? 1 : 0);
+    if (!sel.length && !d.other.on) {
+      L.push("I haven't chosen specific universities. Write one core letter suitable for highly selective US universities.");
+    } else {
+      if (targets > 1) L.push("One letter normally goes to every college through the Common App or the school's platform. Write one core letter that works for all of the universities below. Keep every fact identical, and shift only the emphasis if I ask for a version for one of them.");
+      else if (targets === 1) L.push("Tailor the emphasis to this university, without changing any facts.");
+      else L.push("Write one core letter suitable for highly selective US universities.");
+      letterUnis.forEach(function (u) {
+        L.push("", u.full + ": " + u.deadlinePlain + ".");
+        var lead = u.missionLabel === "Founding Grant, 1885" ? "Founding Grant (1885), its statement of purpose" : u.missionLabel;
+        L.push(lead + ": \"" + u.mission.join(" ") + "\"");
+        u.also.forEach(function (a) { L.push(a[0] + ": " + a[1]); });
+        L.push("Letters: " + u.letters);
+        L.push("Emphasise: " + u.show);
+      });
+      if (sel.some(function (u) { return u.noLetters; })) {
+        L.push("", "UCLA doesn't accept letters of recommendation for first-year applicants, so don't tailor anything for it.");
+      }
+      if (d.other.on) {
+        var oname = (d.other.name || "").trim() || "Another university";
+        var oinfo = (d.other.info || "").trim();
+        L.push("", oname + ":");
+        L.push(oinfo ? "Here is its own mission or guidance, pasted by me:\n" + oinfo : "I haven't pasted its mission or guidance, so don't rely on memory for its current requirements; keep the letter general for it.");
+      }
+    }
+
+    L.push("", "DRAFT");
+    L.push("Don't ask me questions first. Draft straight away from my answers. Where a specific detail is missing, leave a short [placeholder] for me to fill.");
+    DRAFT[p.kind].forEach(function (l) { L.push(l); });
+    L.push("After the draft, give one short list: any [placeholders] to fill and the facts I should double-check.");
+
+    L.push("", "RULES",
+      "- Build the letter from my answers and the verified facts below. Never invent anecdotes, quotes, numbers, dates or achievements. If something is missing, leave a short [placeholder] rather than asking me.",
+      "- Treat his activities and portfolio as background. Don't list them; colleges already have them. Connect at most one or two to something I actually saw.",
+      "- Avoid stock praise (\"hard-working\", \"a pleasure to teach\", \"passionate\") unless a specific example backs it.",
+      "- Keep these facts worded exactly as follows:");
+    factsFor(p).forEach(function (k) { if (FACTS[k].rule) L.push("  • " + FACTS[k].text + " " + FACTS[k].rule); });
+    L.push("  • " + GLOBAL_RULE);
+    (p.extraRules || []).forEach(function (r) { L.push("- " + r); });
+    if (categoryOf(p, d) === "humanities") L.push("- Caltech asks a humanities letter to comment on his writing. If I quoted his work, use one or two sentences of it.");
+
+    L.push("", "ABOUT PARTH (verified)",
+      "- Year 13 at GEMS Metropole School, Motor City, Dubai (UAE). Four A-Levels, including Further Mathematics, Chemistry and Physics. Interested in engineering: aerospace, satellites, propulsion and autonomous vehicles.");
+    factsFor(p).forEach(function (k) { if (k !== "alevels") L.push("- " + FACTS[k].text); });
+
+    L.push("", "PARTH'S ACTIVITIES (background only; mention an activity only if one of my answers refers to it)");
+    ACTIVITIES.forEach(function (a) { L.push("- " + a); });
+    if (PORTFOLIO_URL) L.push("His portfolio of projects: " + PORTFOLIO_URL + " (background only).");
+    L.push("Parth is also sending me his activities list separately. If I paste it after this prompt, treat it as background in the same way.");
+
+    L.push("", "HOW US LETTERS DIFFER FROM UK REFERENCES",
+      "- Two or three specific moments beat a summary.",
+      "- Comparisons with other students carry weight.",
+      "- Character counts alongside ability.",
+      "- First person, about one page.");
+
+    L.push("", "AFTER THE DRAFT",
+      "I may ask you about US admissions, these universities or wording. Answer briefly from this brief and say plainly when something isn't covered.");
+
+    L.push("", p.kind === "hoy" ? "Begin: write the notes now." : "Begin: write the letter now.");
+    return L.join("\n");
+  }
+
+  /* ---------- Rendering: chooser ---------- */
+  function renderChooser() {
+    function mk(p) {
+      return '<button type="button" class="pick" id="pick-' + p.id + '" data-id="' + p.id + '" aria-pressed="false">' +
+        '<span class="pick-name">' + esc(p.label) + '</span><span class="pick-role">' + esc(p.sub) + '</span></button>';
+    }
+    ["current", "other", "school"].forEach(function (g) {
+      $("#grid-" + g).innerHTML = PEOPLE.filter(function (p) { return p.group === g; }).map(mk).join("");
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".pick"), function (b) {
+      b.addEventListener("click", function () { select(b.getAttribute("data-id"), true); });
+    });
+  }
+
+  /* ---------- Rendering: steps ---------- */
+  var HOW_HTML =
+    '<section class="step"><div class="step-head"><p class="eyebrow">How it works</p><h2>From your answers to a ready prompt</h2></div>' +
+    '<ol class="howlist"><li>Pick your name in step 1.</li><li>Check the details that open your letter.</li>' +
+    '<li>Answer what you can; the AI drafts from your answers without asking you again.</li><li>Choose the universities.</li>' +
+    '<li>Copy your master prompt into ChatGPT, Claude, Gemini or Copilot.</li></ol></section>';
+
+  function field(id, label, control) { return '<div class="field"><label for="' + id + '">' + label + '</label>' + control + '</div>'; }
+  function textInput(id, key, value, placeholder, type) {
+    return '<input id="' + id + '" data-k="' + key + '" type="' + (type || "text") + '" value="' + esc(value) + '" placeholder="' + esc(placeholder || "") + '"' + (type === "number" ? ' min="0" inputmode="numeric"' : "") + '>';
+  }
+  function selectInput(id, key, value, options, blank) {
+    var html = '<select id="' + id + '" data-k="' + key + '">' + (blank ? '<option value="">' + esc(blank) + '</option>' : "");
+    options.forEach(function (o) { html += '<option value="' + esc(o) + '"' + (o === value ? " selected" : "") + '>' + esc(o) + '</option>'; });
+    return html + "</select>";
+  }
+
+  function stepAbout(p, d) {
+    var f = [];
+    f.push(field("f-name", "Your name, as it should appear", textInput("f-name", "about.name", d.about.name, "e.g. Mr A. Smith")));
+    if (p.kind === "teacher") {
+      f.push(field("f-subject", "Subject you teach Parth", selectInput("f-subject", "about.subject", d.about.subject, SUBJECTS.map(function (s) { return s[0]; }), "Choose a subject")));
+      if (d.about.subject === "Other") f.push(field("f-subject-other", "Your subject", textInput("f-subject-other", "about.subjectOther", d.about.subjectOther, "e.g. Design and Technology")));
+    }
+    f.push(field("f-title", p.kind === "teacher" ? "Job title (optional)" : "Job title", textInput("f-title", "about.title", d.about.title, p.kind === "teacher" ? "e.g. Head of Physics" : "")));
+    f.push(field("f-taught", p.kind === "teacher" ? "How long have you taught Parth?" : "How long have you known Parth?", selectInput("f-taught", "about.taught", d.about.taught, TAUGHT, "Choose")));
+    if (p.kind === "teacher") {
+      f.push(field("f-context", "Class and level (optional)", textInput("f-context", "about.context", d.about.context, p.special === "former" ? "e.g. Year 10–11, class of 20" : "e.g. Year 13 A-Level class of 12")));
+      f.push(field("f-exp", "Years you have been teaching (optional)", textInput("f-exp", "about.experience", d.about.experience, "e.g. 12", "number")));
+    }
+    if (p.kind === "counsellor") f.push(field("f-pred", "Predicted grades, if issued (optional)", textInput("f-pred", "about.predicted", d.about.predicted, "e.g. A* A* A A")));
+
+    return '<section class="step" id="step-about" aria-labelledby="about-h">' +
+      '<div class="step-head"><p class="eyebrow">Step 2</p><h2 id="about-h">About you</h2><p class="section-sub">These details open the letter. Change anything that isn\'t right.</p></div>' +
+      '<div class="role-note"><p class="job" id="job-text">' + esc(jobFor(p, d)) + '</p>' + (p.note ? '<p class="note">' + esc(p.note) + '</p>' : '') +
+      '<div class="goes"><span class="goes-label">Where it goes</span><span class="goes-text">' + esc(goesFor(p)) + '</span></div></div>' +
+      '<div class="form-grid">' + f.join("") + '</div></section>';
+  }
+
+  function stepAnswers(p, d) {
+    var items = questionsFor(p, d).map(function (id) {
+      var q = Q[id];
+      var answeredCls = isAnswered(id, d) ? " is-answered" : "";
+      var optTag = q.optional ? '<span class="optional-tag">Optional</span>' : "";
+      return '<li class="qitem' + answeredCls + '" data-row="' + id + '">' +
+        '<div class="qhead"><label class="qlabel" for="q-' + id + '">' + esc(q.q) + '<span class="qstate">Answered</span>' + optTag + '</label></div>' +
+        '<div class="qbody"><p class="qhint">' + esc(q.hint) + '</p>' +
+        '<textarea id="q-' + id + '" data-k="ans.' + id + '" rows="' + (q.rows || 3) + '">' + esc(d.answers[id] || "") + '</textarea></div></li>';
+    }).join("");
+
+    return '<section class="step" id="step-answers" aria-labelledby="answers-h">' +
+      '<div class="step-head"><p class="eyebrow">Step 3</p><h2 id="answers-h">Your answers</h2>' +
+      '<p class="section-sub">Answer what you can and skip anything you like. Every answer goes straight into your prompt, so the AI drafts from them without asking you again. Answers are saved only in this browser so you can come back; nothing is sent to Parth or anyone else. New to US letters? The six differences from UK references are further down the page.</p></div>' +
+      '<ol class="qlist">' + items + '</ol>' +
+      '<div class="answers-foot"><span class="small-note">On a shared computer? Clear your answers when you finish.</span><button type="button" class="textbtn danger" data-action="clear" data-armed="false">Clear my answers</button></div></section>';
+  }
+
+  function stepUnisInner(p, d) {
+    var chips = sortedUnis().map(function (u) {
+      var on = d.unis.indexOf(u.id) !== -1;
+      return '<button type="button" class="uchip" data-uni="' + u.id + '" aria-pressed="' + on + '"><span class="uname">' + esc(u.name) + '</span><span class="tag">' + esc(u.tag) + '</span></button>';
+    }).join("") + '<button type="button" class="uchip" data-uni="other" aria-pressed="' + d.other.on + '"><span class="uname">Other university</span><span class="tag">Any US college</span></button>';
+
+    var other = d.other.on ? '<div class="other-fields">' +
+      field("f-other-name", "University name", textInput("f-other-name", "other.name", d.other.name, "e.g. MIT")) +
+      field("f-other-info", "Paste its mission statement or guidance for recommenders (optional)", '<textarea id="f-other-info" data-k="other.info" rows="3">' + esc(d.other.info) + '</textarea>') +
+      '</div>' : "";
+
+    var sel = TABLE_ORDER.map(uniById).filter(function (u) { return d.unis.indexOf(u.id) !== -1; });
+    var list = sel.map(function (u) {
+      return '<li><strong>' + esc(u.name) + '</strong><span>' + esc(u.tableLetters) + (u.id === "caltech" ? ". The humanities letter must comment on writing." : "") + '</span></li>';
+    }).join("");
+    if (d.other.on) list += '<li><strong>' + esc((d.other.name || "").trim() || "Other university") + '</strong><span>The AI will use what you paste, or keep the letter general for it.</span></li>';
+    var summary = list ? '<div><p class="group-label">What each selected university asks for</p><ul class="sel-list">' + list + '</ul></div>'
+      : '<p class="small-note">No universities selected yet. With none selected, the prompt asks for one core letter suitable for highly selective US universities.</p>';
+
+    return '<div class="step-head"><p class="eyebrow">Step 4</p><h2 id="unis-h">Universities</h2>' +
+      '<p class="section-sub">Choose the universities the prompt should keep in mind. One letter usually goes to all of them, so the AI writes one core letter and only shifts emphasis if you ask for a single-university version.</p></div>' +
+      '<div class="uni-actions"><button type="button" class="textbtn" data-action="all">Select all</button><button type="button" class="textbtn" data-action="none">Clear</button></div>' +
+      '<div class="chips">' + chips + '</div>' + other + summary;
+  }
+  function stepUnis(p, d) { return '<section class="step" id="step-unis" aria-labelledby="unis-h">' + stepUnisInner(p, d) + '</section>'; }
+
+  function grow(t) {
+    t.style.height = "auto";
+    t.style.height = (t.scrollHeight + 2) + "px";
+  }
+  function growAll(root) { Array.prototype.forEach.call((root || document).querySelectorAll("textarea"), grow); }
+
+  function renderSteps() {
+    var host = $("#steps");
+    var p = byId(current);
+    document.body.classList.toggle("has-person", !!p);
+    if (!p) { host.innerHTML = HOW_HTML; renderPanel(); return; }
+    var d = getData(p);
+    host.innerHTML = stepAbout(p, d) + stepAnswers(p, d) + stepUnis(p, d);
+    growAll(host);
+    renderPanel();
+  }
+  function rerenderUnis() {
+    var p = byId(current); if (!p) return;
+    var sec = $("#step-unis");
+    sec.innerHTML = stepUnisInner(p, getData(p));
+    growAll(sec);
+  }
+
+  /* ---------- Rendering: master prompt panel ---------- */
+  function renderPanel() {
+    var p = byId(current);
+    var pre = $("#prompt-text");
+    var copyBtn = $("#copy-btn");
+    if (!p) {
+      pre.innerHTML = '<span class="prompt-empty">Your master prompt will appear here: your answers, the universities you choose, the verified facts about Parth and the rules that keep the draft accurate.</span>';
+      $("#panel-for").textContent = "Pick your name to start. The prompt fills in as you answer.";
+      $("#panel-status").textContent = "No answers yet.";
+      $("#meter-fill").style.width = "0%";
+      copyBtn.disabled = true;
+      return;
+    }
+    var d = getData(p);
+    var pr = progress(p, d);
+    var n = d.unis.length + (d.other.on ? 1 : 0);
+    var uniText = n ? n + (n === 1 ? " university" : " universities") : "no universities selected";
+    pre.textContent = buildPrompt(p, d);
+    $("#panel-for").textContent = "For " + displayName(p, d) + ". It updates as you type.";
+    $("#panel-status").textContent = pr.done + " of " + pr.total + " questions answered · " + uniText;
+    $("#meter-fill").style.width = Math.round(100 * pr.done / Math.max(1, pr.total)) + "%";
+    $("#bar-status").textContent = pr.done + " of " + pr.total + " answered · " + uniText;
+    copyBtn.disabled = false;
+  }
+
+  /* ---------- Events ---------- */
+  function setByKey(p, key, value) {
+    var d = getData(p);
+    var parts = key.split(".");
+    if (parts[0] === "about") d.about[parts[1]] = value;
+    else if (parts[0] === "ans") d.answers[parts[1]] = value;
+    else if (parts[0] === "other") d.other[parts[1]] = value;
+    save(p);
+  }
+  function refreshRowState(p, el) {
+    var row = el.closest(".qitem");
+    if (!row) return;
+    row.classList.toggle("is-answered", isAnswered(row.getAttribute("data-row"), getData(p)));
+  }
+
+  function onInput(e) {
+    var el = e.target;
+    var key = el.getAttribute && el.getAttribute("data-k");
+    var p = byId(current);
+    if (!key || !p) return;
+    setByKey(p, key, el.value);
+    if (el.tagName === "TEXTAREA") grow(el);
+    refreshRowState(p, el);
+    if (key === "about.subjectOther") {
+      var job = $("#job-text"); if (job) job.textContent = jobFor(p, getData(p));
+    }
+    if (key === "other.name") {
+      var host = $("#step-unis"); var strongs = host ? host.querySelectorAll(".sel-list li strong") : [];
+      if (strongs.length) strongs[strongs.length - 1].textContent = (getData(p).other.name || "").trim() || "Other university";
+    }
+    renderPanel();
+  }
+
+  function onChange(e) {
+    var el = e.target;
+    var key = el.getAttribute && el.getAttribute("data-k");
+    var p = byId(current);
+    if (!key || !p || el.tagName !== "SELECT") return;
+    setByKey(p, key, el.value);
+    if (key === "about.subject") {
+      var y = window.scrollY;
+      renderSteps();
+      window.scrollTo(0, y);
+      var s = $("#f-subject"); if (s) s.focus();
+      return;
+    }
+    renderPanel();
+  }
+
+  var clearTimer = null;
+  function onClick(e) {
+    var p = byId(current);
+    if (!p) return;
+    var d = getData(p);
+    var chip = e.target.closest("[data-uni]");
+    if (chip) {
+      var id = chip.getAttribute("data-uni");
+      if (id === "other") d.other.on = !d.other.on;
+      else {
+        var i = d.unis.indexOf(id);
+        if (i === -1) d.unis.push(id); else d.unis.splice(i, 1);
+      }
+      save(p);
+      rerenderUnis();
+      var again = document.querySelector('[data-uni="' + id + '"]'); if (again) again.focus();
+      renderPanel();
+      return;
+    }
+    var act = e.target.closest("[data-action]");
+    if (!act) return;
+    var a = act.getAttribute("data-action");
+    if (a === "all") { d.unis = UNIS.map(function (u) { return u.id; }); save(p); rerenderUnis(); renderPanel(); }
+    else if (a === "none") { d.unis = []; d.other.on = false; save(p); rerenderUnis(); renderPanel(); }
+    else if (a === "clear") {
+      if (act.getAttribute("data-armed") !== "true") {
+        act.setAttribute("data-armed", "true");
+        act.textContent = "Click again to clear every answer";
+        clearTimeout(clearTimer);
+        clearTimer = setTimeout(function () {
+          var b = document.querySelector('[data-action="clear"]');
+          if (b) { b.setAttribute("data-armed", "false"); b.textContent = "Clear my answers"; }
+        }, 5000);
+      } else {
+        clearTimeout(clearTimer);
+        d.answers = {};
+        save(p);
+        renderSteps();
+        var head = $("#answers-h"); if (head) head.scrollIntoView({ block: "start" });
+      }
+    }
+  }
+
+  function copyPrompt() {
+    var p = byId(current);
+    if (!p) return;
+    var pre = $("#prompt-text");
+    var text = buildPrompt(p, getData(p));
+    function done(msg) { $("#copy-status").textContent = msg; $("#bar-status").textContent = msg; }
+    function fallback() {
+      try {
+        var range = document.createRange();
+        range.selectNodeContents(pre);
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      } catch (e) { /* selection unavailable */ }
+      done("Selected. Press Ctrl+C (⌘C on a Mac) to copy, or long-press on a phone.");
+    }
+    try {
+      navigator.clipboard.writeText(text).then(function () {
+        done("Copied. Paste it into ChatGPT, Claude, Gemini or Copilot.");
+      }, fallback);
+    } catch (e) { fallback(); }
+  }
+
+  /* ---------- Reference ---------- */
+  function renderReference() {
+    $("#college-grid").innerHTML = sortedUnis().map(function (u) {
+      var kv = '<dt>Letters</dt><dd>' + esc(u.letters) + '</dd><dt>For your letter</dt><dd>' + esc(u.show) + '</dd>' +
+        (u.deadlineNote ? '<dt>Dates</dt><dd>' + esc(u.deadlineNote) + '</dd>' : '') +
+        u.also.map(function (a) { return '<dt>' + esc(a[0]) + '</dt><dd>' + esc(a[1]) + '</dd>'; }).join("");
+      return '<article class="college" id="c-' + u.id + '">' +
+        '<div class="college-head"><h3>' + esc(u.name) + '</h3><span class="chip' + (u.early ? ' early' : '') + '">' + esc(u.round) + ' · ' + esc(u.deadline) + '</span></div>' +
+        (u.full !== u.name ? '<p class="full">' + esc(u.full) + '</p>' : '') +
+        '<blockquote class="mission"><span class="mission-label">' + esc(u.missionLabel) + '</span>' +
+          u.mission.map(function (m) { return '<p>' + esc(m) + '</p>'; }).join("") + '</blockquote>' +
+        '<dl class="kv">' + kv + '</dl>' +
+        '<p class="links">' + u.links.map(function (l) { return '<a href="' + esc(l[1]) + '" target="_blank" rel="noopener">' + esc(l[0]) + ' ↗</a>'; }).join("") + '</p>' +
+      '</article>';
+    }).join("");
+    $("#deadline-rows").innerHTML = TABLE_ORDER.map(function (id) {
+      var u = uniById(id);
+      return '<tr' + (u.early ? ' class="early"' : '') + '><td><a href="#c-' + u.id + '">' + esc(u.name) + '</a></td><td>' + esc(u.round) +
+        '</td><td class="num">' + esc(u.tableDate) + '</td><td>' + esc(u.tableLetters) + '</td></tr>';
+    }).join("");
+  }
+
+  /* ---------- Selection ---------- */
+  function resolveId(id) { return byId(id) ? id : (LEGACY[id] && byId(LEGACY[id]) ? LEGACY[id] : null); }
+  function select(id, scroll) {
+    current = resolveId(id);
+    Array.prototype.forEach.call(document.querySelectorAll(".pick"), function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-id") === current));
+    });
+    $("#copy-status").textContent = "";
+    renderSteps();
+    if (current) {
+      store.set(STORE_PREFIX + "id", current);
+      if (window.location.hash.slice(1) !== current) {
+        try { window.history.replaceState(null, "", "#" + current); } catch (e) { /* history unavailable */ }
+      }
+    }
+    if (scroll && current) {
+      var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var target = $("#step-about");
+      if (target) target.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    }
+  }
+
+  /* ---------- Init ---------- */
+  renderChooser();
+  renderReference();
+  var steps = $("#steps");
+  steps.addEventListener("input", onInput);
+  steps.addEventListener("change", onChange);
+  steps.addEventListener("click", onClick);
+  $("#copy-btn").addEventListener("click", copyPrompt);
+  $("#bar-copy").addEventListener("click", copyPrompt);
+  $("#bar-view").addEventListener("click", function () {
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    $("#panel").scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  });
+  $("#expand-btn").addEventListener("click", function () {
+    var panel = $("#panel");
+    var open = panel.classList.toggle("expanded");
+    this.setAttribute("aria-expanded", String(open));
+    this.textContent = open ? "Collapse" : "Show all";
+  });
+  var fromHash = resolveId(window.location.hash.slice(1));
+  var saved = resolveId(store.get(STORE_PREFIX + "id"));
+  select(fromHash || saved || null, false);
+  window.addEventListener("hashchange", function () {
+    var h = resolveId(window.location.hash.slice(1));
+    if (h && h !== current) select(h, false);
+  });
+})();
+</script>
