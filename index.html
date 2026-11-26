@@ -519,6 +519,24 @@ tr.early td { background: var(--accent-tint); }
     h_staff: { q: "What do other staff say about him?", hint: "Short quotes are useful to the counsellor." },
     compare: { q: "Your letter will describe Parth as one of the best students you have taught. What sets him apart from the other strong students you've taught?", hint: "You can adjust this line when you edit the draft." },
     compare_year: { q: "Your letter will describe Parth as one of the strongest students in his year group. What sets him apart?", hint: "You can adjust this line when you edit the draft." },
+    st_approach: { q: "Describe one problem where you watched him work out how to approach it. What did he try first, and how did his thinking change?", hint: "The sequence matters more than the answer: first attempt, where he got stuck, what shifted." },
+    st_reason: { q: "What does he do when he doesn't know the answer: estimate, test an assumption, question the set-up, or something else? Give one example.", hint: "Research universities read for how a student reasons, not only whether he gets it right." },
+    st_depth: { q: "Where has his understanding gone below the surface of the course: a reason behind a rule, or a mechanism he wanted to understand properly?", hint: "Caltech asks for evidence of depth of understanding of difficult concepts." },
+    st_connect: { q: "When has he linked chemistry to maths, physics or something outside the course? What did he say or do?", hint: "Skip this if you haven't seen it. Cornell names exploration across boundaries among its values." },
+    compare_think: { optional: true, about: "the quality of his reasoning", q: "How does his way of reasoning compare with the other strong STEM students you've taught? Where does he sit, and why?", hint: "A comparison with a reason carries weight in a US letter. Leave it blank if you'd rather not compare; the draft will not assume a ranking." },
+    pc_share: { q: "Describe one time you saw Parth share what he knows with a classmate or the class. What did he do or say?", hint: "A specific moment: who, what the topic was, how he explained it." },
+    pc_effect: { q: "What changed for the person he helped, or for the class, afterwards?", hint: "Harvard asks how a student makes the people around him better, so the effect on others is the useful part." },
+    pc_style: { q: "How does he share: does he give the answer, or help others reach it? Does he credit others?", hint: "A small detail (a question he asks, how he words it) is more convincing than a general description." },
+    pc_receive: { q: "How does he respond when a classmate knows something he doesn't, or corrects him?", hint: "Sharing runs both ways. Carnegie Mellon lists collaboration among its values." },
+    pc_often: { q: "How often have you seen him do this, and does he do it without being asked?", hint: "A tendency is a pattern. Say whether it was once, a few times or regularly, and be honest if it was only once." },
+    compare_share: { optional: true, about: "sharing knowledge with classmates", q: "How does he compare with other strong students you've taught on this? Where does he sit, and why?", hint: "Leave it blank if you'd rather not compare; the draft will not assume a ranking." },
+    ex_failed: { q: "Describe a practical or trial that didn't work for him. What went wrong, and what did he do next?", hint: "Caltech's advice to recommenders mentions persevering after a failed lab trial." },
+    ex_care: { q: "How does he handle method, safety, accuracy and writing up results in practical work?", hint: "Only what you have seen: how he plans, whether he checks his own results, how he records them." },
+    compare_bench: { optional: true, about: "his work at the bench", q: "How does he compare with other strong students you've taught in practical work? Where does he sit, and why?", hint: "Leave it blank if you'd rather not compare; the draft will not assume a ranking." },
+    iv_further: { q: "Describe one time he took a physics idea further than the course required. What was it, and how did you find out?", hint: "The question he asked, what he did with it, and how it ended." },
+    iv_return: { q: "Has he come back to you later with an answer or an extension to something raised in class?", hint: "Following up unprompted is the clearest sign of curiosity." },
+    iv_unknown: { q: "How does he approach a physics idea he doesn't understand yet?", hint: "Stanford calls this kind of curiosity intellectual vitality. Include where he was still unsure, if he was." },
+    compare_curious: { optional: true, about: "curiosity and follow-through", q: "How does he compare with other strong students you've taught on this? Where does he sit, and why?", hint: "Leave it blank if you'd rather not compare; the draft will not assume a ranking." },
     extra: { optional: true, q: "Anything else you want the letter to say?", hint: "Optional." },
     takeaway: { q: "If an admissions reader remembers one thing from your letter, what should it be?", hint: "This becomes the letter's main message." }
   };
@@ -551,7 +569,21 @@ tr.early td { background: var(--accent-tint); }
     h_others: "How he treats younger students and staff",
     h_responsibility: "A time he took responsibility",
     h_growth: "How he has changed",
-    h_staff: "What other staff say about him"
+    h_staff: "What other staff say about him",
+    st_approach: "A problem where I watched him work out his approach",
+    st_reason: "What he does when he doesn't know the answer",
+    st_depth: "Where his understanding went below the surface",
+    st_connect: "When he linked chemistry to other subjects",
+    pc_share: "A time he shared what he knows",
+    pc_effect: "What changed for the people he helped",
+    pc_style: "How he shares, and whether he credits others",
+    pc_receive: "How he responds when classmates know more or correct him",
+    pc_often: "How often I have seen him do this",
+    ex_failed: "A practical or trial that didn't work, and what he did next",
+    ex_care: "How he handles method, safety, accuracy and write-ups",
+    iv_further: "A time he took an idea further than the course",
+    iv_return: "When he came back later with an answer or an extension",
+    iv_unknown: "How he approaches physics he doesn't understand yet"
   };
 
   var DRAFT = {
@@ -585,8 +617,63 @@ tr.early td { background: var(--accent-tint); }
   /* ---------- People ---------- */
   var PEOPLE = [
     { id: "burford", group: "current", kind: "teacher", label: "Harri Burford", sub: "Current teacher", defaultName: "Harri Burford" },
-    { id: "mosafeer", group: "current", kind: "teacher", label: "Mohammad Mosafeer", sub: "Current teacher", defaultName: "Mohammad Mosafeer" },
-    { id: "snell", group: "current", kind: "teacher", label: "Catharine Snell", sub: "Current teacher", defaultName: "Catharine Snell" },
+    {
+      id: "mosafeer", group: "current", kind: "teacher", label: "Mohammad Mosafeer", sub: "Mathematics", defaultName: "Mohammad Mosafeer",
+      subject: "Mathematics",
+      job: "Yours is the letter about how Parth treats what he knows. US colleges read for what a student adds to the people around him: Harvard asks how he makes them better, Carnegie Mellon lists collaboration among its values, and Caltech reads for his effect on teams. The strongest version of your letter is a pattern you have seen more than once, with an example of what changed for the student he helped.",
+      note: "If you have seen it only once, say so. A letter built honestly on one clear example is stronger than a general claim.",
+      goes: "Best fit: Harvard (how he makes the people around him better), Carnegie Mellon (collaboration, and it reads only one teacher letter, so Parth will choose which one goes there), Caltech (his effect on teams) and UC Berkeley Engineering (collaboration)." + " Parth will confirm which colleges your letter goes to and when. UC Berkeley takes letters only if it invites Parth (due 10 Jan 2027); UCLA doesn't accept letters.",
+      lane: {
+        theme: "Parth shares what he knows. This is a tendency, shown through repeated behaviour, not one kind act.",
+        rules: [
+          "State the pattern, how often I have seen it and whether he does it without being asked, then prove it with specific moments.",
+          "Show the effect on the other person or the class, not only that he helped.",
+          "Show how he shares (guides others to the answer rather than just giving it, credits others, takes correction) only where my answers say so.",
+          "Match the strength of the claim to what I have seen. Don't turn one act of help into a general claim."
+        ],
+        skip: "his own maths results and competitions, his project list, any club he founded or leads, and general academic praise."
+      },
+      questions: ["memorable", "words", "pc_share", "pc_effect", "pc_style", "pc_receive", "pc_often", "compare_share", "extra", "takeaway"],
+      draft: [
+        "Write the letter in my voice: first person, plain and warm, British spelling. About one page (500–750 words). This letter has one job: show that Parth shares what he knows. Structure:",
+        "1. How I know Parth: subject, level, how long, class size, my teaching experience. Two sentences at most.",
+        "2. One sentence that states the tendency plainly, and how often I have seen it (use my answer on frequency). If I have seen it only once, say so honestly and build the letter on that one example.",
+        "3. Two specific moments from my answers: what he did, how he explained it, and what changed for the student or the class.",
+        "4. How he shares: whether he guides others to the answer rather than just giving it, whether he credits others, and how he responds when a classmate knows more or corrects him.",
+        "5. The comparison with other strong students I have taught, on sharing knowledge only, in my words. Skip it if I didn't give one.",
+        "6. One sentence on what this suggests about the classmate or teammate he will be at university, only if my answers support it.",
+        "7. A clear closing recommendation."
+      ],
+      extraRules: ["If my material is thin, write a shorter letter built on what I do know rather than padding it."]
+    },
+    {
+      id: "snell", group: "current", kind: "teacher", label: "Catharine Snell", sub: "Chemistry", defaultName: "Catharine Snell",
+      subject: "Chemistry",
+      job: "Yours is the letter about how Parth thinks. Colleges that read closely for depth, such as Caltech, want to see his reasoning in motion: how he approaches a problem he can't yet solve, what he tries, and how his thinking changes. Other letters cover his activities and how he works with classmates, so yours can stay on his reasoning.",
+      note: "One extended moment, told in order, is worth more than several short ones. If you can recall only one, build the letter on it.",
+      goes: "Best fit: Caltech (depth of understanding of difficult concepts), Princeton (independent thinking) and Cornell (exploration across boundaries)." + " Parth will confirm which colleges your letter goes to and when. UC Berkeley takes letters only if it invites Parth (due 10 Jan 2027); UCLA doesn't accept letters.",
+      lane: {
+        theme: "How Parth thinks in STEM: his reasoning in motion, not his marks or his list of activities.",
+        rules: [
+          "Build the whole letter around that one claim and let every example serve it.",
+          "Prefer one extended moment, told as a sequence (the problem, what he tried first, where he got stuck, what changed his approach), over several short ones.",
+          "Mention character only where it shows in how he reasons, for example willingness to be wrong."
+        ],
+        skip: "his marks and predicted grades, competition results, his project list, any club he founded or leads, and how he works with classmates."
+      },
+      questions: ["memorable", "words", "st_approach", "st_reason", "st_depth", "st_connect", "compare_think", "extra", "takeaway"],
+      draft: [
+        "Write the letter in my voice: first person, plain and warm, British spelling. About one page (500–750 words). This letter has one job: show how Parth thinks in STEM. Structure:",
+        "1. How I know Parth: subject, level, how long, class size, my teaching experience. Two sentences at most.",
+        "2. One sentence that makes the claim about how he reasons (use my one-thing-to-remember answer if I gave one).",
+        "3. The main body: one extended moment from my answers, told as a sequence: the problem, what he tried first, where he got stuck, what changed his approach, what he concluded.",
+        "4. A shorter second moment, only if my answers include one: a link he made between chemistry and maths, physics or something outside the course, or a point where his understanding went below the surface.",
+        "5. The comparison with other strong students I have taught, on the quality of his reasoning only, in my words. Skip it if I didn't give one.",
+        "6. One or two sentences on character, only where it shows in how he reasons. No general character section.",
+        "7. A clear closing recommendation."
+      ],
+      extraRules: ["If my material is thin, write a shorter letter built on what I do know rather than padding it."]
+    },
     {
       id: "suleman", group: "current", kind: "teacher", label: "Nadeem Suleman", sub: "Further Mathematics", defaultName: "Nadeem Suleman",
       subject: "Further Mathematics", taught: "Two years", special: "tsp", facts: ["imo", "leaf", "roles", "tsp"],
@@ -597,13 +684,59 @@ tr.early td { background: var(--accent-tint); }
         "This letter is the only place The Steamology Project appears in his application, so describe what I saw of it in concrete terms."
       ]
     },
-    { id: "thomas", group: "current", kind: "teacher", label: "Ammu Thomas", sub: "Current teacher", defaultName: "Ammu Thomas" },
+    {
+      id: "thomas", group: "current", kind: "teacher", label: "Ammu Thomas", sub: "Physics", defaultName: "Ammu Thomas",
+      subject: "Physics",
+      job: "Yours is the letter about Parth's curiosity beyond the syllabus. Stanford looks for intellectual vitality, Johns Hopkins for self-driven inquiry, and Princeton for independent thinking and a habit of research. Only you can show what he does with a physics question when nobody has assigned it.",
+      note: "If you can recall only a few specific moments, a shorter letter built on them is stronger than a longer general one. A ten-minute conversation with Parth about one of his projects would give you first-hand material; the project question below suggests topics.",
+      goes: "Best fit: Stanford (intellectual vitality), Johns Hopkins (self-driven inquiry and original research) and Princeton (independent thinking and a habit of research)." + " Parth will confirm which colleges your letter goes to and when. UC Berkeley takes letters only if it invites Parth (due 10 Jan 2027); UCLA doesn't accept letters.",
+      lane: {
+        theme: "Parth's curiosity beyond the syllabus: what he does with a physics question when nobody has assigned it.",
+        rules: [
+          "Show the question he asked, what he did with it and how I came to know. Following up after class is the strongest evidence.",
+          "Include where he was still unsure or stuck, if I say so. Candour builds trust.",
+          "If I have talked with him about his projects, describe what he explained and how clearly. Don't vouch for results or claims I haven't checked."
+        ],
+        skip: "competition results and activities lists, any club he founded or leads, how he works with classmates, and general character praise."
+      },
+      questions: ["memorable", "words", "curiosity_science", "iv_further", "iv_return", "iv_unknown", "labtalk", "compare_curious", "extra", "takeaway"],
+      draft: [
+        "Write the letter in my voice: first person, plain and warm, British spelling. About one page (500–750 words). This letter has one job: show that Parth pursues questions beyond the syllabus. Structure:",
+        "1. How I know Parth: subject, level, how long, class size, my teaching experience. Two sentences at most.",
+        "2. One sentence that makes the claim about his curiosity (use my one-thing-to-remember answer if I gave one).",
+        "3. Two or three moments from my answers: the question, what he did with it, how I came to know, how it ended. Include where he was still unsure or stuck, if I say so.",
+        "4. How he approaches a physics idea he doesn't understand yet.",
+        "5. Only if I have talked with him about his projects: what he explained and how clearly. Don't vouch for results or claims I haven't checked.",
+        "6. The comparison with other strong students I have taught, on curiosity and follow-through only, in my words. Skip it if I didn't give one.",
+        "7. A clear closing recommendation."
+      ],
+      extraRules: ["If my material is thin, write a shorter letter built on what I do know rather than padding it."]
+    },
     {
       id: "usman", group: "current", kind: "teacher", label: "Muhammad Usman", sub: "Chemistry", defaultName: "Muhammad Usman",
       subject: "Chemistry", taught: "Two years", special: "lab", facts: ["roles", "spaceOly", "imo", "cern"],
-      job: "Yours is the science letter. It shows Parth as an experimenter at the bench as well as on paper, and it carries equal weight with the maths letter at colleges that ask for two.",
+      job: "Yours is the experimenter's letter. It shows Parth at the bench as well as on paper: how he plans a practical, what happens when a trial fails, and what he does next. Caltech's advice to recommenders mentions persevering after a failed lab trial, and your letter carries equal weight with the maths letter at colleges that ask for two.",
       note: "If you can recall only a few specific moments, a shorter letter built on them is stronger than a longer general one. A ten-minute conversation with Parth about one of his projects would give you first-hand material; the project question below suggests topics.",
-      goes: "Most of his colleges ask for two teacher letters. If yours is one of Princeton's two, it's needed by 1 Nov 2026. The rest are due in early January, and UC Berkeley's by 10 Jan 2027 if it invites letters.",
+      goes: "Best fit: Caltech (perseverance after a failed lab trial), Georgia Tech, and Cornell Engineering (which needs at least one letter from a maths, science or computer science teacher)." + " Parth will confirm which colleges your letter goes to and when. UC Berkeley takes letters only if it invites Parth (due 10 Jan 2027); UCLA doesn't accept letters.",
+      lane: {
+        theme: "Parth as an experimenter at the bench: how he plans, what happens when a trial fails, and what he does next.",
+        rules: [
+          "Centre the letter on one practical or lab trial, including what went wrong or was hard.",
+          "Cover method, safety and accuracy only from what I saw.",
+          "Persistence after a failed or messy result is the point. Don't claim it unless my answers show it."
+        ],
+        skip: "his maths ability, competition results, his project list, any club he founded or leads, and classroom teamwork unless it happened in the lab."
+      },
+      questions: ["memorable", "words", "moment_science", "ex_failed", "ex_care", "labtalk", "compare_bench", "extra", "takeaway"],
+      draft: [
+        "Write the letter in my voice: first person, plain and warm, British spelling. About one page (500–750 words). This letter has one job: show Parth as an experimenter at the bench. Structure:",
+        "1. How I know Parth: subject, level, how long, class size, my teaching experience. Two sentences at most.",
+        "2. One sentence on what distinguishes him as an experimenter (use my one-thing-to-remember answer if I gave one).",
+        "3. The main body: one practical or trial from my answers: what he set out to do, what went wrong or was hard, what he did next, what came of it.",
+        "4. How he handles method, safety, accuracy and recording, only from what I saw.",
+        "5. The comparison with other strong students I have taught at the bench, in my words. Skip it if I didn't give one.",
+        "6. A clear closing recommendation."
+      ],
       extraRules: ["If my material is thin, write a shorter letter built on what I do know rather than padding it."]
     },
     {
@@ -821,6 +954,7 @@ tr.early td { background: var(--accent-tint); }
     return "other";
   }
   function questionsFor(p, d) {
+    if (p.questions) return p.questions;
     if (p.kind === "counsellor") return ["memorable", "words", "c_programme", "c_roles", "c_colleagues", "c_context", "compare_year", "extra", "takeaway"];
     if (p.kind === "hoy") return ["memorable", "words", "h_prefect", "h_others", "h_responsibility", "h_growth", "h_staff", "extra", "takeaway"];
     if (p.special === "former") return ["memorable", "words", "f_debates", "f_unusual", "f_disagree", "f_thread", "compare", "extra", "takeaway"];
@@ -857,7 +991,8 @@ tr.early td { background: var(--accent-tint); }
       : p.kind === "hoy" ? "notes for the counselor letter (and an additional letter only if I ask)"
       : "a teacher recommendation letter";
     var qs = questionsFor(p, d);
-    var cmpId = qs.indexOf("compare_year") !== -1 ? "compare_year" : (qs.indexOf("compare") !== -1 ? "compare" : null);
+    var cmpId = null;
+    qs.forEach(function (id) { if (id.indexOf("compare") === 0) cmpId = id; });
 
     L.push("You are an experienced US university admissions reader and recommendation-letter coach. Help me write " + task + " for my student Parth Chapper's US university applications (Fall 2027 entry). My answers are below. Draft straight away from them, without asking me questions first, and follow the rules exactly.");
 
@@ -872,19 +1007,31 @@ tr.early td { background: var(--accent-tint); }
     L.push("- School: GEMS Metropole School, Motor City, Dubai (UAE).");
 
     L.push("", "WHAT PARTH HOPES MY LETTER DOES", jobFor(p, d));
+    if (p.lane) {
+      L.push("", "YOUR LETTER'S LANE (each of Parth's recommenders writes about a different side of him, so this letter does one job)");
+      L.push("Theme: " + p.lane.theme);
+      p.lane.rules.forEach(function (r) { L.push("- " + r); });
+      L.push("- Leave out (other letters or the application cover these): " + p.lane.skip);
+      L.push("- The verified facts further down are for exact wording only. Use one only if one of my answers refers to it.");
+      L.push("- If my answers don't support the theme, say so in the placeholder list and write a shorter letter. Don't pad it with general praise.");
+    }
 
     L.push("", "MY ANSWERS (my own observations; build the letter from these)");
     var shown = 0;
     qs.forEach(function (id) {
-      if (id === "compare" || id === "compare_year" || id === "extra" || id === "takeaway") return;
+      if (id.indexOf("compare") === 0 || id === "extra" || id === "takeaway") return;
       if (!isAnswered(id, d)) return;
       L.push("- " + LABELS[id] + ": " + String(d.answers[id]).trim());
       shown++;
     });
     if (cmpId) {
       var why = (d.answers[cmpId] || "").trim();
-      L.push("- Comparison: describe him as " + (cmpId === "compare_year" ? "one of the strongest students in his year group" : "one of the best students I have taught in my career") + ". " +
-        (why ? "What sets him apart: " + why : "Support this with the strongest specific moment in my answers, or leave a [placeholder] for the reason."));
+      if (Q[cmpId].about) {
+        L.push("- Comparison, on " + Q[cmpId].about + " only: " + (why ? "my view, in my words: " + why : "I haven't answered. Leave a [placeholder] and don't assume a ranking."));
+      } else {
+        L.push("- Comparison: describe him as " + (cmpId === "compare_year" ? "one of the strongest students in his year group" : "one of the best students I have taught in my career") + ". " +
+          (why ? "What sets him apart: " + why : "Support this with the strongest specific moment in my answers, or leave a [placeholder] for the reason."));
+      }
     }
     if (isAnswered("takeaway", d)) L.push("- The one thing a reader should remember (make this the letter's main message): " + d.answers.takeaway.trim());
     if (isAnswered("extra", d)) L.push("- Also include: " + d.answers.extra.trim());
@@ -923,7 +1070,7 @@ tr.early td { background: var(--accent-tint); }
 
     L.push("", "DRAFT");
     L.push("Don't ask me questions first. Draft straight away from my answers. Where a specific detail is missing, leave a short [placeholder] for me to fill.");
-    DRAFT[p.kind].forEach(function (l) { L.push(l); });
+    (p.draft || DRAFT[p.kind]).forEach(function (l) { L.push(l); });
     L.push("After the draft, give one short list: any [placeholders] to fill and the facts I should double-check.");
 
     L.push("", "RULES",
